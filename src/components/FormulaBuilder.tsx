@@ -254,17 +254,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
       const targetNode = prev!.nodes.find(node => node.id === targetNodeId);
       if (!targetNode) return prev!;
 
-      // If target node is a function, add as child of that function
-      if (targetNode.type === 'function') {
-        newNode.parentId = targetNode.id;
-        return {
-          ...prev!,
-          nodes: [...prev!.nodes, newNode],
-          selectedNodeId: newNode.id
-        };
-      }
-
-      // Otherwise, inherit parent from target node and insert at same level
+      // Always inherit parent from target node and insert at same level
       newNode.parentId = targetNode.parentId;
 
       const targetIndex = prev!.nodes.findIndex(node => node.id === targetNodeId);
@@ -417,26 +407,14 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
   const showContextMenu = (e: React.MouseEvent, nodeId: string, position: 'before' | 'after') => {
     e.preventDefault();
     e.stopPropagation();
-    const targetNode = state?.nodes.find(node => node.id === nodeId);
     
-    // If clicking on a function, always add as child (argument)
-    if (targetNode?.type === 'function') {
-      setContextMenu({
-        show: true,
-        x: e.clientX,
-        y: e.clientY,
-        nodeId,
-        position: 'after' // Always 'after' for function arguments
-      });
-    } else {
-      setContextMenu({
-        show: true,
-        x: e.clientX,
-        y: e.clientY,
-        nodeId,
-        position
-      });
-    }
+    setContextMenu({
+      show: true,
+      x: e.clientX,
+      y: e.clientY,
+      nodeId,
+      position
+    });
   };
 
   const hideContextMenu = () => {
@@ -1246,10 +1224,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
           style={{ left: contextMenu.x, top: contextMenu.y }}
         >
           <div className={styles.contextMenuHeader}>
-            {state?.nodes.find(n => n.id === contextMenu.nodeId)?.type === 'function' 
-              ? 'Add argument to function:' 
-              : `Insert ${contextMenu.position} this element:`
-            }
+            {`Insert ${contextMenu.position} this element:`}
           </div>
           <button
             onClick={() => handleContextMenuAction('attribute')}
