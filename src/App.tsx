@@ -1,8 +1,6 @@
 import React from 'react';
-import { FormulaBuilderDemo } from './components/FormulaBuilderDemo';
 import './App.css';
-import { TokenFormulaBuilder } from './components/TokenFormulaBuilder';
-import { NodeFormulaBuilder } from './components/NodeFormulaBuilder';
+import { FormulaBuilderDemo } from './components/FormulaBuilderDemo';
 
 function App() {
   return (
