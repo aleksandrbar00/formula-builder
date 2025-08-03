@@ -462,47 +462,201 @@ export const generateFormulaString = (
   }).join(' ');
 };
 
-export const parseTextFormula = (
-  text: string, 
-  attributes: Array<{ id: string; name: string; type: string }>
-): FormulaNode[] => {
-  // This is a simplified parser - in practice you'd want a more robust solution
-  const tokens = text.split(/\s+/).filter(token => token.length > 0);
-  const nodes: FormulaNode[] = [];
+// Token types for parsing
+interface Token {
+  type: 'function' | 'operator' | 'attribute' | 'value' | 'paren' | 'comma';
+  value: string;
+  position: number;
+}
+
+// Tokenize the formula string
+const tokenizeFormula = (text: string): Token[] => {
+  const tokens: Token[] = [];
+  let i = 0;
   
-  tokens.forEach((token) => {
-    if (ALL_OPERATORS.includes(token as MathOperator)) {
+  while (i < text.length) {
+    const char = text[i];
+    
+    // Skip whitespace
+    if (/\s/.test(char)) {
+      i++;
+      continue;
+    }
+    
+    // Handle parentheses
+    if (char === '(' || char === ')') {
+      tokens.push({ type: 'paren', value: char, position: i });
+      i++;
+      continue;
+    }
+    
+    // Handle commas
+    if (char === ',') {
+      tokens.push({ type: 'comma', value: char, position: i });
+      i++;
+      continue;
+    }
+    
+    // Handle attributes {AttributeName}
+    if (char === '{') {
+      let j = i + 1;
+      while (j < text.length && text[j] !== '}') j++;
+      if (j < text.length) {
+        tokens.push({ type: 'attribute', value: text.substring(i, j + 1), position: i });
+        i = j + 1;
+        continue;
+      }
+    }
+    
+    // Handle numbers
+    if (/\d/.test(char)) {
+      let j = i;
+      while (j < text.length && /[\d.]/.test(text[j])) j++;
+      tokens.push({ type: 'value', value: text.substring(i, j), position: i });
+      i = j;
+      continue;
+    }
+    
+    // Handle operators and functions
+    let j = i;
+    while (j < text.length && /[a-zA-Z_><=!+\-*/^%]/.test(text[j])) j++;
+    if (j > i) {
+      const word = text.substring(i, j);
+      
+      // Check if it's a function
+      if ([...FUNCTIONS, ...LOGICAL_FUNCTIONS].includes(word as any)) {
+        tokens.push({ type: 'function', value: word, position: i });
+      } else if ([...OPERATORS, ...LOGICAL_OPERATORS].includes(word as any)) {
+        tokens.push({ type: 'operator', value: word, position: i });
+      }
+      
+      i = j;
+      continue;
+    }
+    
+    // Skip unknown characters
+    i++;
+  }
+  
+  return tokens;
+};
+
+// Parse tokens into FormulaNode structure
+const parseTokensToNodes = (
+  tokens: Token[],
+  attributes: Array<{ id: string; name: string; type: string }>,
+  parentId?: string
+): FormulaNode[] => {
+  const nodes: FormulaNode[] = [];
+  let i = 0;
+  
+  while (i < tokens.length) {
+    const token = tokens[i];
+    
+    if (token.type === 'function') {
+      // Create function node
+      const functionNode: FormulaNode = {
+        id: generateId(),
+        type: 'function',
+        function: token.value as MathFunction | LogicalFunction,
+        parentId
+      };
+      nodes.push(functionNode);
+      
+      // Look for opening parenthesis
+      if (i + 1 < tokens.length && tokens[i + 1].type === 'paren' && tokens[i + 1].value === '(') {
+        i += 2; // Skip function name and opening paren
+        
+        // Parse function arguments
+        let argumentIndex = 0;
+        let parenCount = 1;
+        let argumentStart = i;
+        
+        while (i < tokens.length && parenCount > 0) {
+          if (tokens[i].type === 'paren') {
+            if (tokens[i].value === '(') parenCount++;
+            else if (tokens[i].value === ')') parenCount--;
+          }
+          
+          // Handle argument separation by commas or end of function
+          if ((tokens[i].type === 'comma' && parenCount === 1) || parenCount === 0) {
+            // Create argument group
+            const argumentTokens = tokens.slice(argumentStart, parenCount === 0 ? i : i);
+            if (argumentTokens.length > 0) {
+              const groupNode: FormulaNode = {
+                id: generateId(),
+                type: 'group',
+                parentId: functionNode.id,
+                argumentIndex
+              };
+              nodes.push(groupNode);
+              
+              // Parse argument content
+              const argumentNodes = parseTokensToNodes(argumentTokens, attributes, groupNode.id);
+              nodes.push(...argumentNodes);
+              
+              argumentIndex++;
+            }
+            argumentStart = i + 1;
+          }
+          
+          if (parenCount > 0) i++;
+        }
+      } else {
+        i++;
+      }
+    } else if (token.type === 'operator') {
       nodes.push({
         id: generateId(),
         type: 'operator',
-        operator: token as MathOperator
+        operator: token.value as MathOperator | LogicalOperator,
+        parentId
       });
-    } else if (ALL_FUNCTIONS.includes(token as MathFunction)) {
-      nodes.push({
-        id: generateId(),
-        type: 'function',
-        function: token as MathFunction
-      });
-    } else if (token.startsWith('{') && token.endsWith('}')) {
-      const attrName = token.slice(1, -1);
+      i++;
+    } else if (token.type === 'attribute') {
+      const attrName = token.value.slice(1, -1); // Remove { }
       const attr = attributes.find(a => a.name === attrName);
       if (attr) {
         nodes.push({
           id: generateId(),
           type: 'attribute',
-          attributeId: attr.id
+          attributeId: attr.id,
+          parentId
         });
       }
-    } else if (!isNaN(Number(token))) {
+      i++;
+    } else if (token.type === 'value') {
       nodes.push({
         id: generateId(),
         type: 'value',
-        value: Number(token)
+        value: Number(token.value),
+        parentId
       });
+      i++;
+    } else {
+      i++; // Skip unknown tokens
     }
-  });
+  }
   
   return nodes;
+};
+
+export const parseTextFormula = (
+  text: string, 
+  attributes: Array<{ id: string; name: string; type: string }>
+): FormulaNode[] => {
+  if (!text.trim()) {
+    return [];
+  }
+  
+  try {
+    const tokens = tokenizeFormula(text);
+    const nodes = parseTokensToNodes(tokens, attributes);
+    return nodes;
+  } catch (error) {
+    console.error('Error parsing formula:', error);
+    throw new Error('Invalid formula syntax');
+  }
 };
 
 export const validateFormula = (
