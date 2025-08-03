@@ -4,6 +4,7 @@ import { FormulaBuilder } from './FormulaBuilder';
 import { LogicalFormulaBuilder } from './LogicalFormulaBuilder';
 import { MixedFormulaBuilder } from './MixedFormulaBuilder';
 import { FormulaBuilderState, Attribute } from '../types/formula';
+import styles from './FormulaBuilderDemo.module.css';
 
 // Sample attributes for demonstration
 const SAMPLE_ATTRIBUTES: Attribute[] = [
@@ -129,18 +130,18 @@ export const FormulaBuilderDemo: React.FC = () => {
   const IconComponent = config.icon;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className={styles.container}>
       {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <h1 className="text-xl font-bold text-gray-900">Formula Builder</h1>
+      <div className={styles.header}>
+        <div className={styles.headerContent}>
+          <div className={styles.headerInner}>
+            <div className={styles.headerLeft}>
+              <div className={styles.headerTitle}>
+                <h1>Formula Builder</h1>
               </div>
             </div>
-            <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2 text-sm text-gray-500">
+            <div className={styles.headerRight}>
+              <div className={styles.headerInfo}>
                 <BookOpen size={16} />
                 <span>Interactive Demo</span>
               </div>
@@ -149,11 +150,11 @@ export const FormulaBuilderDemo: React.FC = () => {
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className={styles.mainContent}>
         {/* Builder Selection */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Choose Your Formula Type</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className={styles.builderSelection}>
+          <h2 className={styles.selectionTitle}>Choose Your Formula Type</h2>
+          <div className={styles.builderGrid}>
             {(['math', 'logical', 'mixed'] as BuilderType[]).map((builderType) => {
               const builderConfig = BUILDER_CONFIGS[builderType];
               const BuilderIcon = builderConfig.icon;
@@ -163,43 +164,37 @@ export const FormulaBuilderDemo: React.FC = () => {
                 <div
                   key={builderType}
                   onClick={() => setSelectedBuilder(builderType)}
-                  className={`
-                    relative p-6 rounded-lg border-2 cursor-pointer transition-all duration-200
-                    ${isSelected 
-                      ? `border-${builderConfig.color}-500 bg-${builderConfig.color}-50` 
-                      : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
-                    }
-                  `}
+                  className={`${styles.builderCard} ${isSelected ? `${styles.selected} ${styles[builderConfig.color]}` : ''}`}
                 >
                   {isSelected && (
-                    <div className={`absolute top-3 right-3 w-6 h-6 bg-${builderConfig.color}-500 rounded-full flex items-center justify-center`}>
-                      <CheckCircle size={16} className="text-white" />
+                    <div className={`${styles.selectedIndicator} ${styles[builderConfig.color]}`}>
+                      <CheckCircle size={16} className={styles.selectedIndicatorIcon} />
                     </div>
                   )}
                   
-                  <div className="flex items-center mb-4">
-                    <div className={`w-12 h-12 bg-${builderConfig.color}-100 rounded-lg flex items-center justify-center mr-4`}>
-                      <BuilderIcon size={24} className={`text-${builderConfig.color}-600`} />
+                  <div className={styles.builderHeader}>
+                    <div className={`${styles.builderIcon} ${styles[builderConfig.color]}`}>
+                      <BuilderIcon size={24} />
                     </div>
-                    <div>
-                      <h3 className="text-lg font-semibold text-gray-900">{builderConfig.title}</h3>
-                      <p className="text-sm text-gray-500">{builderConfig.description}</p>
+                    <div className={styles.builderInfo}>
+                      <h3>{builderConfig.title}</h3>
+                      <p>{builderConfig.description}</p>
                     </div>
                   </div>
                   
-                  <div className="space-y-2">
-                    <h4 className="text-sm font-medium text-gray-700">Examples:</h4>
+                  <div className={styles.examples}>
+                    <h4>Examples:</h4>
                     {builderConfig.examples.map((example, index) => (
-                      <div key={index} className="text-xs text-gray-600">
-                        <div className="font-medium">{example.name}</div>
-                        <div className="text-gray-500">{example.description}</div>
-                        <code className="text-xs bg-gray-100 px-1 py-0.5 rounded">{example.formula}</code>
+                      <div key={index} className={styles.example}>
+                        <div className={styles.exampleName}>{example.name}</div>
+                        <div className={styles.exampleDescription}>{example.description}</div>
+                        <code className={styles.exampleCode}>{example.formula}</code>
                       </div>
                     ))}
                   </div>
                   
-                  <div className="mt-4 flex items-center text-sm text-gray-500">
-                    <Play size={14} className="mr-1" />
+                  <div className={styles.clickHint}>
+                    <Play size={14} />
                     Click to select
                   </div>
                 </div>
@@ -209,28 +204,28 @@ export const FormulaBuilderDemo: React.FC = () => {
         </div>
 
         {/* Selected Builder */}
-        <div className="bg-white rounded-lg shadow-sm border">
-          <div className={`border-b border-${config.color}-200 bg-${config.color}-50 px-6 py-4`}>
-            <div className="flex items-center">
-              <div className={`w-10 h-10 bg-${config.color}-100 rounded-lg flex items-center justify-center mr-4`}>
-                <IconComponent size={20} className={`text-${config.color}-600`} />
+        <div className={styles.selectedBuilder}>
+          <div className={`${styles.selectedBuilderHeader} ${styles[config.color]}`}>
+            <div className={styles.selectedBuilderHeaderContent}>
+              <div className={`${styles.selectedBuilderIcon} ${styles[config.color]}`}>
+                <IconComponent size={20} />
               </div>
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900">{config.title}</h2>
-                <p className="text-sm text-gray-600">{config.description}</p>
+              <div className={styles.selectedBuilderInfo}>
+                <h2>{config.title}</h2>
+                <p>{config.description}</p>
               </div>
             </div>
           </div>
           
-          <div className="p-6">
+          <div className={styles.selectedBuilderContent}>
             {renderBuilder()}
           </div>
         </div>
 
         {/* Quick Navigation */}
-        <div className="mt-8 bg-white rounded-lg shadow-sm border p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Navigation</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className={styles.quickNavigation}>
+          <h3>Quick Navigation</h3>
+          <div className={styles.navigationGrid}>
             {(['math', 'logical', 'mixed'] as BuilderType[]).map((builderType) => {
               const builderConfig = BUILDER_CONFIGS[builderType];
               const BuilderIcon = builderConfig.icon;
@@ -241,20 +236,13 @@ export const FormulaBuilderDemo: React.FC = () => {
                   key={builderType}
                   onClick={() => setSelectedBuilder(builderType)}
                   disabled={isSelected}
-                  className={`
-                    flex items-center justify-between p-4 rounded-lg border transition-all duration-200
-                    ${isSelected 
-                      ? `border-${builderConfig.color}-300 bg-${builderConfig.color}-50 text-${builderConfig.color}-700` 
-                      : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-sm'
-                    }
-                    ${isSelected ? 'cursor-default' : 'cursor-pointer'}
-                  `}
+                  className={`${styles.navigationButton} ${isSelected ? `${styles.selected} ${styles[builderConfig.color]}` : ''}`}
                 >
-                  <div className="flex items-center">
-                    <BuilderIcon size={20} className="mr-3" />
-                    <span className="font-medium">{builderConfig.title}</span>
+                  <div className={styles.navigationButtonContent}>
+                    <BuilderIcon size={20} />
+                    <span>{builderConfig.title}</span>
                   </div>
-                  {!isSelected && <ArrowRight size={16} />}
+                  {!isSelected && <ArrowRight size={16} className={styles.navigationButtonArrow} />}
                 </button>
               );
             })}
@@ -262,28 +250,28 @@ export const FormulaBuilderDemo: React.FC = () => {
         </div>
 
         {/* Tips Section */}
-        <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
-          <h3 className="text-lg font-semibold text-blue-900 mb-3 flex items-center">
-            <BookOpen size={20} className="mr-2" />
+        <div className={styles.tipsSection}>
+          <h3 className={styles.tipsHeader}>
+            <BookOpen size={20} />
             Tips for Building Formulas
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <h4 className="font-medium text-blue-800 mb-2">Getting Started:</h4>
-              <ul className="text-sm text-blue-700 space-y-1">
-                <li>• Start by selecting attributes from your data</li>
-                <li>• Use operators to connect values and attributes</li>
-                <li>• Use functions for complex calculations</li>
-                <li>• Use groups to control order of operations</li>
+          <div className={styles.tipsGrid}>
+            <div className={styles.tipsColumn}>
+              <h4>Getting Started:</h4>
+              <ul className={styles.tipsList}>
+                <li>Start by selecting attributes from your data</li>
+                <li>Use operators to connect values and attributes</li>
+                <li>Use functions for complex calculations</li>
+                <li>Use groups to control order of operations</li>
               </ul>
             </div>
-            <div>
-              <h4 className="font-medium text-blue-800 mb-2">Best Practices:</h4>
-              <ul className="text-sm text-blue-700 space-y-1">
-                <li>• Give your formulas descriptive names</li>
-                <li>• Test your formulas with sample data</li>
-                <li>• Use the preview to verify your logic</li>
-                <li>• Keep formulas simple and readable</li>
+            <div className={styles.tipsColumn}>
+              <h4>Best Practices:</h4>
+              <ul className={styles.tipsList}>
+                <li>Give your formulas descriptive names</li>
+                <li>Test your formulas with sample data</li>
+                <li>Use the preview to verify your logic</li>
+                <li>Keep formulas simple and readable</li>
               </ul>
             </div>
           </div>

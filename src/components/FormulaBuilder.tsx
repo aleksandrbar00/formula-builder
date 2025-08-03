@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Plus, X, Parentheses, Code, HelpCircle, Info, CheckCircle, AlertCircle, Edit3, Copy, RotateCcw, RotateCw, Save, FileText, Type } from 'lucide-react';
 import { FormulaBuilderProps, FormulaNode, MathOperator, MathFunction } from '../types/formula';
 import { clsx } from 'clsx';
+import styles from './FormulaBuilder.module.css';
 
 const OPERATORS: MathOperator[] = ['+', '-', '*', '/', '**', '%'];
 const FUNCTIONS: MathFunction[] = ['abs', 'sin', 'cos', 'tan', 'sqrt', 'log', 'exp', 'floor', 'ceil', 'round'];
@@ -634,21 +635,13 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
     );
 
     return (
-      <div key={node.id} className="space-y-2">
+      <div key={node.id} className={styles.nodeContainer}>
         <div
-          className={clsx(
-            'flex items-center gap-2 p-2 border rounded-lg transition-all',
-            isSelected ? 'border-blue-500 bg-blue-50' : 
-            isInBrokenConnection ? 'border-red-300 bg-red-50' : 'border-gray-300 bg-white',
-            'hover:border-gray-400'
-          )}
+          className={`${styles.nodeItem} ${isSelected ? styles.selected : ''} ${isInBrokenConnection ? styles.error : ''}`}
           style={{ marginLeft: `${depth * 20}px` }}
           onClick={() => setState(prev => ({ ...prev!, selectedNodeId: node.id }))}
           onContextMenu={(e) => {
-            // Don't show context menu for functions - they have their own argument management
-            if (node.type !== 'function') {
-              showContextMenu(e, node.id, 'after');
-            }
+            showContextMenu(e, node.id, 'after');
           }}
         >
           {node.type === 'attribute' && (
@@ -656,7 +649,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
               <select
                 value={node.attributeId || ''}
                 onChange={(e) => updateNode(node.id, { attributeId: e.target.value })}
-                className="px-2 py-1 border rounded text-sm"
+                className={styles.nodeSelect}
                 onClick={(e) => e.stopPropagation()}
               >
                 <option value="">Select attribute</option>
@@ -667,7 +660,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                 ))}
               </select>
               {node.attributeId && (
-                <span className="text-xs text-gray-500">
+                <span className={styles.nodeDescription}>
                   {attributes.find(a => a.id === node.attributeId)?.type}
                 </span>
               )}
@@ -679,7 +672,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
               <select
                 value={node.operator || ''}
                 onChange={(e) => updateNode(node.id, { operator: e.target.value as MathOperator })}
-                className="px-2 py-1 border rounded text-sm font-mono"
+                className={`${styles.nodeSelect} font-mono`}
                 onClick={(e) => e.stopPropagation()}
               >
                 <option value="">Select operator</option>
@@ -688,9 +681,9 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                 ))}
               </select>
               {node.operator && (
-                <div className="text-xs text-gray-500">
+                <div className={styles.nodeDescription}>
                   <div>{OPERATOR_DESCRIPTIONS[node.operator].description}</div>
-                  <div className="font-mono">{OPERATOR_DESCRIPTIONS[node.operator].example}</div>
+                  <div className={styles.nodeDescriptionMono}>{OPERATOR_DESCRIPTIONS[node.operator].example}</div>
                 </div>
               )}
             </div>
@@ -702,7 +695,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                 <select
                   value={node.function || ''}
                   onChange={(e) => updateNode(node.id, { function: e.target.value as MathFunction })}
-                  className="px-2 py-1 border rounded text-sm"
+                  className={styles.nodeSelect}
                   onClick={(e) => e.stopPropagation()}
                 >
                   <option value="">Select function</option>
@@ -711,9 +704,9 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                   ))}
                 </select>
                 {node.function && FUNCTION_SIGNATURES[node.function] && (
-                  <div className="text-xs text-gray-500 max-w-xs">
+                  <div className={`${styles.nodeDescription} max-w-xs`}>
                     <div>{FUNCTION_SIGNATURES[node.function].description}</div>
-                    <div className="font-mono">{FUNCTION_SIGNATURES[node.function].example}</div>
+                    <div className={styles.nodeDescriptionMono}>{FUNCTION_SIGNATURES[node.function].example}</div>
                   </div>
                 )}
               </div>
@@ -727,12 +720,12 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                   // Function has a signature - show argument buttons only
                   const slots = sig.arity === 'variadic' ? Math.max(children.length + 1, 2) : sig.arity;
                   return (
-                    <div className="flex flex-col gap-1 ml-4">
+                    <div className={styles.functionArgs}>
                       {Array.from({ length: typeof slots === 'number' ? slots : children.length + 1 }).map((_, idx) => (
-                        <div key={idx} className="flex items-center gap-2">
-                          <span className="text-xs text-gray-500 w-16">{sig.labels[idx] || `Arg ${idx + 1}`}</span>
+                        <div key={idx} className={styles.functionArg}>
+                          <span className={styles.functionArgLabel}>{sig.labels[idx] || `Arg ${idx + 1}`}</span>
                           <button
-                            className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded border border-blue-200 hover:bg-blue-200"
+                            className={styles.functionArgButton}
                             onClick={e => {
                               e.stopPropagation();
                               // Add empty attribute node as child
@@ -759,7 +752,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                   return (
                     <div className="flex items-center gap-1 ml-4">
                       <button
-                        className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded border border-blue-200 hover:bg-blue-200"
+                        className={styles.functionArgButton}
                         onClick={e => {
                           e.stopPropagation();
                           // Add empty attribute node as child
@@ -789,27 +782,22 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
               type="number"
               value={node.value?.toString() || ''}
               onChange={(e) => updateNode(node.id, { value: parseFloat(e.target.value) || 0 })}
-              className="px-2 py-1 border rounded text-sm w-20"
+              className={styles.nodeInput}
               onClick={(e) => e.stopPropagation()}
               placeholder="0"
             />
           )}
 
           {node.type === 'group' && (
-            <div className="flex items-center gap-1">
-              <span className="text-gray-500">(</span>
-              <span className="text-gray-400">{childNodes.length} items</span>
-              <span className="text-gray-500">)</span>
-            </div>
-          )}
-
-          {/* Action buttons for adding elements - only show enabled actions */}
-          <div className="flex items-center gap-1">
-            {allowedActions.attribute && (
+            <div className={styles.groupContent}>
+              <span className={styles.groupBracket}>(</span>
+              <span className={styles.groupCount}>{childNodes.length} items</span>
+              <span className={styles.groupBracket}>)</span>
               <button
-                onClick={(e) => {
+                className={styles.groupButton}
+                onClick={e => {
                   e.stopPropagation();
-                  // For functions, add as child. For others, add as child of the node
+                  // Add empty attribute node as child
                   const newNode: FormulaNode = {
                     id: generateId(),
                     type: 'attribute',
@@ -821,60 +809,37 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                     selectedNodeId: newNode.id
                   }));
                 }}
-                className="p-1 text-blue-400 hover:text-blue-600"
+              >
+                + Add item
+              </button>
+            </div>
+          )}
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-1">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                deleteNode(node.id);
+              }}
+              className={styles.deleteButton}
+              title="Delete node"
+            >
+              <X size={14} />
+            </button>
+            
+            {/* Add buttons for different types */}
+            {allowedActions.attribute && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  addNode('attribute', node.id);
+                }}
+                className={`${styles.addButton} ${styles.blue}`}
                 title="Add attribute"
               >
                 <Plus size={14} />
               </button>
-            )}
-            
-            {/* Insert buttons - allow inserting between nodes (but not for functions) */}
-            {node.type !== 'function' && (
-              <>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    addNodeFromPosition('operator', 'after', node.id);
-                  }}
-                  className="p-1 text-green-400 hover:text-green-600"
-                  title="Insert operator after this element"
-                >
-                  <span className="text-xs">+</span>
-                </button>
-                
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    addNodeFromPosition('attribute', 'after', node.id);
-                  }}
-                  className="p-1 text-blue-400 hover:text-blue-600"
-                  title="Insert attribute after this element"
-                >
-                  <span className="text-xs">A</span>
-                </button>
-                
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    addNodeFromPosition('value', 'after', node.id);
-                  }}
-                  className="p-1 text-orange-400 hover:text-orange-600"
-                  title="Insert value after this element"
-                >
-                  <span className="text-xs">V</span>
-                </button>
-                
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    addNodeFromPosition('function', 'after', node.id);
-                  }}
-                  className="p-1 text-purple-400 hover:text-purple-600"
-                  title="Insert function after this element"
-                >
-                  <span className="text-xs">F</span>
-                </button>
-              </>
             )}
             
             {allowedActions.operator && (
@@ -883,23 +848,10 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                   e.stopPropagation();
                   addNode('operator', node.id);
                 }}
-                className="p-1 text-green-400 hover:text-green-600"
+                className={`${styles.addButton} ${styles.green}`}
                 title="Add operator"
               >
-                <span className="text-sm font-mono">⚡</span>
-              </button>
-            )}
-            
-            {allowedActions.function && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  addNode('function', node.id);
-                }}
-                className="p-1 text-purple-400 hover:text-purple-600"
-                title="Add function"
-              >
-                <Code size={14} />
+                <span className="text-xs">⚡</span>
               </button>
             )}
             
@@ -909,10 +861,23 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                   e.stopPropagation();
                   addNode('value', node.id);
                 }}
-                className="p-1 text-orange-400 hover:text-orange-600"
+                className={`${styles.addButton} ${styles.orange}`}
                 title="Add value"
               >
-                <span className="text-sm">#</span>
+                <span className="text-xs">#</span>
+              </button>
+            )}
+            
+            {allowedActions.function && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  addNode('function', node.id);
+                }}
+                className={`${styles.addButton} ${styles.purple}`}
+                title="Add function"
+              >
+                <span className="text-sm font-mono">⚡</span>
               </button>
             )}
             
@@ -922,29 +887,18 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                   e.stopPropagation();
                   addNode('group', node.id);
                 }}
-                className="p-1 text-gray-400 hover:text-gray-600"
+                className={`${styles.addButton} ${styles.gray}`}
                 title="Add group"
               >
-                <Parentheses size={14} />
+                <span className="text-sm">#</span>
               </button>
             )}
-            
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                deleteNode(node.id);
-              }}
-              className="p-1 text-red-400 hover:text-red-600"
-              title="Delete"
-            >
-              <X size={14} />
-            </button>
           </div>
         </div>
 
         {/* Render child nodes */}
         {childNodes.length > 0 && (
-          <div className="space-y-2">
+          <div className="ml-4">
             {childNodes.map(childNode => renderNode(childNode, depth + 1))}
           </div>
         )}
@@ -956,41 +910,41 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
     const formulaString = generateFormulaString(state?.nodes.filter(node => !node.parentId) || []);
 
     return (
-      <div className="p-4 bg-gray-50 rounded-lg">
-        <div className="flex items-center justify-between mb-2">
-          <h3 className="text-sm font-medium text-gray-700">Formula Preview:</h3>
-          <div className="flex items-center gap-2">
+      <div className={styles.previewSection}>
+        <div className={styles.previewHeader}>
+          <h3 className={styles.previewTitle}>Formula Preview:</h3>
+          <div className={styles.previewStatus}>
             {validationErrors.length === 0 && formulaString && (
-              <div className="flex items-center gap-1 text-green-600">
+              <div className={`${styles.previewStatus} ${styles.valid}`}>
                 <CheckCircle size={14} />
-                <span className="text-xs">Valid</span>
+                <span className={styles.previewStatusText}>Valid</span>
               </div>
             )}
             {validationErrors.length > 0 && (
-              <div className="flex items-center gap-1 text-red-600">
+              <div className={`${styles.previewStatus} ${styles.error}`}>
                 <AlertCircle size={14} />
-                <span className="text-xs">{validationErrors.length} error(s)</span>
+                <span className={styles.previewStatusText}>{validationErrors.length} error(s)</span>
               </div>
             )}
           </div>
         </div>
-        <div className="font-mono text-sm bg-white p-3 rounded border">
+        <div className={styles.previewCode}>
           {formulaString || 'No formula built yet'}
         </div>
         {validationErrors.length > 0 && (
-          <div className="mt-2 p-2 bg-red-50 border border-red-200 rounded">
-            <h4 className="text-xs font-medium text-red-700 mb-1">Issues found:</h4>
-            <ul className="text-xs text-red-600 space-y-1">
+          <div className={styles.previewErrors}>
+            <h4 className={styles.previewErrorsTitle}>Issues found:</h4>
+            <ul className={styles.previewErrorsList}>
               {validationErrors.map((error, index) => (
-                <li key={index}>• {error}</li>
+                <li key={index}>{error}</li>
               ))}
             </ul>
             
             {/* Quick Fix Section */}
             {showQuickFix && brokenConnections.length > 0 && (
-              <div className="mt-3 pt-3 border-t border-red-200">
-                <h5 className="text-xs font-medium text-red-700 mb-2">Quick Fix:</h5>
-                <div className="space-y-2">
+              <div className={styles.previewQuickFix}>
+                <h5 className={styles.previewQuickFixTitle}>Quick Fix:</h5>
+                <div className={styles.previewQuickFixList}>
                   {brokenConnections.map((connection, index) => {
                     const beforeNode = state?.nodes.find(n => n.id === connection.before);
                     const afterNode = state?.nodes.find(n => n.id === connection.after);
@@ -998,16 +952,16 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                     const afterAttr = afterNode?.type === 'attribute' ? attributes.find(a => a.id === afterNode.attributeId)?.name : 'value';
                     
                     return (
-                      <div key={index} className="flex items-center gap-2">
-                        <span className="text-xs text-gray-600">
+                      <div key={index} className={styles.previewQuickFixItem}>
+                        <span className={styles.previewQuickFixText}>
                           {beforeAttr} ? {afterAttr}
                         </span>
-                        <div className="flex gap-1">
+                        <div className={styles.previewQuickFixButtons}>
                           {OPERATORS.map(op => (
                             <button
                               key={op}
                               onClick={() => quickFixConnection(connection.before, connection.after, op)}
-                              className="px-2 py-1 text-xs bg-blue-100 text-blue-700 rounded border border-blue-200 hover:bg-blue-200"
+                              className={styles.previewQuickFixButton}
                             >
                               {op}
                             </button>
@@ -1028,21 +982,21 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
   const rootAllowedActions = getRootAllowedActions();
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-2xl font-bold text-gray-900">Math Formula Builder</h2>
-          <div className="flex items-center gap-2">
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <div className={styles.headerContent}>
+          <h2 className={styles.title}>Math Formula Builder</h2>
+          <div className={styles.headerButtons}>
             <button
               onClick={() => setShowTemplates(!showTemplates)}
-              className="flex items-center gap-2 px-3 py-2 text-sm bg-green-100 text-green-700 rounded-md hover:bg-green-200"
+              className={`${styles.button} ${styles.green}`}
             >
               <FileText size={16} />
               Templates
             </button>
             <button
               onClick={() => setShowHelp(!showHelp)}
-              className="flex items-center gap-2 px-3 py-2 text-sm bg-blue-100 text-blue-700 rounded-md hover:bg-blue-200"
+              className={`${styles.button} ${styles.blue}`}
             >
               <HelpCircle size={16} />
               {showHelp ? 'Hide Help' : 'Show Help'}
@@ -1052,16 +1006,16 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
         
         {/* Templates Modal */}
         {showTemplates && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
-            <h3 className="text-lg font-semibold text-green-900 mb-3">Formula Templates</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className={styles.templatesModal}>
+            <h3 className={styles.templatesTitle}>Formula Templates</h3>
+            <div className={styles.templatesGrid}>
               {FORMULA_TEMPLATES.map((template, index) => (
-                <div key={index} className="p-3 bg-white border border-green-200 rounded-lg">
-                  <h4 className="font-medium text-green-800 mb-1">{template.name}</h4>
-                  <p className="text-sm text-green-700 mb-2">{template.description}</p>
+                <div key={index} className={styles.templateCard}>
+                  <h4 className={styles.templateName}>{template.name}</h4>
+                  <p className={styles.templateDescription}>{template.description}</p>
                   <button
                     onClick={() => applyTemplate(template)}
-                    className="px-3 py-1 bg-green-600 text-white text-sm rounded hover:bg-green-700"
+                    className={styles.templateButton}
                   >
                     Use Template
                   </button>
@@ -1072,55 +1026,55 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
         )}
         
         {showHelp && (
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-            <h3 className="text-lg font-semibold text-blue-900 mb-3">How to Build Math Formulas</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <h4 className="font-medium text-blue-800 mb-2">Basic Operations:</h4>
-                <ul className="text-sm text-blue-700 space-y-1">
-                  <li>• <strong>Attributes:</strong> Select from your data fields</li>
-                  <li>• <strong>Operators:</strong> +, -, *, /, ** (power), % (modulo)</li>
-                  <li>• <strong>Values:</strong> Enter constant numbers</li>
-                  <li>• <strong>Functions:</strong> Mathematical operations like sqrt, abs, etc.</li>
-                  <li>• <strong>Groups:</strong> Use parentheses for order of operations</li>
+          <div className={styles.helpModal}>
+            <h3 className={styles.helpTitle}>How to Build Math Formulas</h3>
+            <div className={styles.helpGrid}>
+              <div className={styles.helpSection}>
+                <h4>Basic Operations:</h4>
+                <ul className={styles.helpList}>
+                  <li><strong>Attributes:</strong> Select from your data fields</li>
+                  <li><strong>Operators:</strong> +, -, *, /, ** (power), % (modulo)</li>
+                  <li><strong>Values:</strong> Enter constant numbers</li>
+                  <li><strong>Functions:</strong> Mathematical operations like sqrt, abs, etc.</li>
+                  <li><strong>Groups:</strong> Use parentheses for order of operations</li>
                 </ul>
               </div>
-              <div>
-                <h4 className="font-medium text-blue-800 mb-2">Examples:</h4>
-                <ul className="text-sm text-blue-700 space-y-1">
-                  <li>• <code>Price * Quantity</code> - Basic multiplication</li>
-                  <li>• <code>sqrt(Revenue)</code> - Square root of revenue</li>
-                  <li>• <code>(Price - Cost) * 0.2</code> - 20% markup calculation</li>
-                  <li>• <code>abs(Profit)</code> - Absolute value of profit</li>
+              <div className={styles.helpSection}>
+                <h4>Examples:</h4>
+                <ul className={styles.helpList}>
+                  <li><code>Price * Quantity</code> - Basic multiplication</li>
+                  <li><code>sqrt(Revenue)</code> - Square root of revenue</li>
+                  <li><code>(Price - Cost) * 0.2</code> - 20% markup calculation</li>
+                  <li><code>abs(Profit)</code> - Absolute value of profit</li>
                 </ul>
               </div>
             </div>
           </div>
         )}
         
-        <div className="grid grid-cols-2 gap-4 mb-4">
+        <div className={styles.formGrid}>
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className={styles.formField}>
               Formula Name
             </label>
             <input
               type="text"
               value={state?.formulaName || ''}
               onChange={(e) => setState(prev => ({ ...prev!, formulaName: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={styles.formInput}
               placeholder="e.g., total_revenue"
             />
           </div>
           
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
+            <label className={styles.formField}>
               Description
             </label>
             <input
               type="text"
               value={state?.formulaDescription || ''}
               onChange={(e) => setState(prev => ({ ...prev!, formulaDescription: e.target.value }))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className={styles.formInput}
               placeholder="e.g., Calculate total revenue from price and quantity"
             />
           </div>
@@ -1128,19 +1082,14 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
       </div>
 
       {/* Edit Mode Toggle */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Formula Construction</h3>
-          <div className="flex items-center gap-2">
+      <div className={styles.editModeSection}>
+        <div className={styles.editModeHeader}>
+          <h3 className={styles.editModeTitle}>Formula Construction</h3>
+          <div className={styles.editModeButtons}>
             <button
               onClick={undo}
               disabled={historyIndex <= 0}
-              className={clsx(
-                "p-2 rounded-md",
-                historyIndex > 0 
-                  ? "text-gray-600 hover:text-gray-800 hover:bg-gray-100" 
-                  : "text-gray-300 cursor-not-allowed"
-              )}
+              className={`${styles.iconButton} ${historyIndex > 0 ? styles.enabled : styles.disabled}`}
               title="Undo"
             >
               <RotateCcw size={16} />
@@ -1148,31 +1097,21 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
             <button
               onClick={redo}
               disabled={historyIndex >= history.length - 1}
-              className={clsx(
-                "p-2 rounded-md",
-                historyIndex < history.length - 1 
-                  ? "text-gray-600 hover:text-gray-800 hover:bg-gray-100" 
-                  : "text-gray-300 cursor-not-allowed"
-              )}
+              className={`${styles.iconButton} ${historyIndex < history.length - 1 ? styles.enabled : styles.disabled}`}
               title="Redo"
             >
               <RotateCw size={16} />
             </button>
             <button
               onClick={copyFormula}
-              className="p-2 text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-md"
+              className={`${styles.iconButton} ${styles.enabled}`}
               title="Copy formula"
             >
               <Copy size={16} />
             </button>
             <button
               onClick={() => setEditMode(editMode === 'visual' ? 'text' : 'visual')}
-              className={clsx(
-                "flex items-center gap-2 px-3 py-2 rounded-md text-sm",
-                editMode === 'text' 
-                  ? "bg-purple-100 text-purple-700" 
-                  : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-              )}
+              className={`${styles.modeToggleButton} ${editMode === 'text' ? styles.text : styles.visual}`}
             >
               {editMode === 'text' ? <Edit3 size={16} /> : <Type size={16} />}
               {editMode === 'text' ? 'Visual Mode' : 'Text Mode'}
@@ -1181,38 +1120,38 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
         </div>
 
         {editMode === 'text' ? (
-          <div className="space-y-4">
+          <div className={styles.textModeSection}>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className={styles.formField}>
                 Edit Formula as Text
               </label>
               <textarea
                 ref={textAreaRef}
                 value={textFormula}
                 onChange={(e) => setTextFormula(e.target.value)}
-                className="w-full h-32 p-3 border border-gray-300 rounded-md font-mono text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={styles.textArea}
                 placeholder="Enter your formula here... e.g., Price * Quantity + 100"
               />
-              <div className="mt-2 text-xs text-gray-500">
+              <div className={styles.textAreaHint}>
                 Use attribute names in curly braces: {'{Price}'}, {'{Quantity}'}
               </div>
             </div>
-            <div className="flex gap-2">
+            <div className={styles.textModeButtons}>
               <button
                 onClick={applyTextFormula}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                className={`${styles.textModeButton} ${styles.primary}`}
               >
                 Apply Formula
               </button>
               <button
                 onClick={pasteFormula}
-                className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700"
+                className={`${styles.textModeButton} ${styles.secondary}`}
               >
                 Paste from Clipboard
               </button>
               <button
                 onClick={() => setEditMode('visual')}
-                className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
+                className={`${styles.textModeButton} ${styles.cancel}`}
               >
                 Cancel
               </button>
@@ -1220,101 +1159,78 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
           </div>
         ) : (
           <>
-            <div className="mb-4">
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Add Root Elements:</h4>
-              <div className="flex flex-wrap gap-2">
-                <button
-                  onClick={() => addNode('attribute')}
-                  disabled={!rootAllowedActions.attribute}
-                  className={clsx(
-                    "px-3 py-2 rounded-md text-sm flex items-center gap-2",
-                    rootAllowedActions.attribute 
-                      ? "bg-blue-500 text-white hover:bg-blue-600" 
-                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  )}
-                >
-                  <Plus size={16} />
-                  Attribute
-                </button>
-                
-                <button
-                  onClick={() => addNode('operator')}
-                  disabled={!rootAllowedActions.operator}
-                  className={clsx(
-                    "px-3 py-2 rounded-md text-sm flex items-center gap-2",
-                    rootAllowedActions.operator 
-                      ? "bg-green-500 text-white hover:bg-green-600" 
-                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  )}
-                >
-                  <span className="text-sm font-mono">⚡</span>
-                  Operator
-                </button>
-                
-                <button
-                  onClick={() => addNode('function')}
-                  disabled={!rootAllowedActions.function}
-                  className={clsx(
-                    "px-3 py-2 rounded-md text-sm flex items-center gap-2",
-                    rootAllowedActions.function 
-                      ? "bg-purple-500 text-white hover:bg-purple-600" 
-                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  )}
-                >
-                  <Code size={16} />
-                  Function
-                </button>
-                
-                <button
-                  onClick={() => addNode('value')}
-                  disabled={!rootAllowedActions.value}
-                  className={clsx(
-                    "px-3 py-2 rounded-md text-sm flex items-center gap-2",
-                    rootAllowedActions.value 
-                      ? "bg-orange-500 text-white hover:bg-orange-600" 
-                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  )}
-                >
-                  <span className="text-sm">#</span>
-                  Value
-                </button>
-                
-                <button
-                  onClick={() => addNode('group')}
-                  disabled={!rootAllowedActions.group}
-                  className={clsx(
-                    "px-3 py-2 rounded-md text-sm flex items-center gap-2",
-                    rootAllowedActions.group 
-                      ? "bg-gray-500 text-white hover:bg-gray-600" 
-                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  )}
-                >
-                  <Parentheses size={16} />
-                  Group
-                </button>
+            <div className={styles.visualModeSection}>
+              <div className={styles.rootElementsSection}>
+                <h4 className={styles.rootElementsTitle}>Add Root Elements:</h4>
+                <div className={styles.rootElementsButtons}>
+                  <button
+                    onClick={() => addNode('attribute')}
+                    disabled={!rootAllowedActions.attribute}
+                    className={`${styles.rootElementButton} ${styles.attribute} ${!rootAllowedActions.attribute ? styles.disabled : ''}`}
+                  >
+                    <Plus size={16} />
+                    Attribute
+                  </button>
+                  
+                  <button
+                    onClick={() => addNode('operator')}
+                    disabled={!rootAllowedActions.operator}
+                    className={`${styles.rootElementButton} ${styles.operator} ${!rootAllowedActions.operator ? styles.disabled : ''}`}
+                  >
+                    <span className="text-sm font-mono">⚡</span>
+                    Operator
+                  </button>
+                  
+                  <button
+                    onClick={() => addNode('function')}
+                    disabled={!rootAllowedActions.function}
+                    className={`${styles.rootElementButton} ${styles.function} ${!rootAllowedActions.function ? styles.disabled : ''}`}
+                  >
+                    <Code size={16} />
+                    Function
+                  </button>
+                  
+                  <button
+                    onClick={() => addNode('value')}
+                    disabled={!rootAllowedActions.value}
+                    className={`${styles.rootElementButton} ${styles.value} ${!rootAllowedActions.value ? styles.disabled : ''}`}
+                  >
+                    <span className="text-sm">#</span>
+                    Value
+                  </button>
+                  
+                  <button
+                    onClick={() => addNode('group')}
+                    disabled={!rootAllowedActions.group}
+                    className={`${styles.rootElementButton} ${styles.group} ${!rootAllowedActions.group ? styles.disabled : ''}`}
+                  >
+                    <Parentheses size={16} />
+                    Group
+                  </button>
+                </div>
               </div>
-            </div>
 
-            <div className="mb-4">
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Formula Tree:</h4>
-              <div className="min-h-[200px] p-4 border-2 border-dashed border-gray-300 rounded-lg">
-                {state?.nodes.filter(node => !node.parentId).length === 0 ? (
-                  <div className="text-center text-gray-500">
-                    <Info size={48} className="mx-auto mb-4 text-gray-300" />
-                    <p className="text-lg font-medium mb-2">Start Building Your Formula</p>
-                    <p className="text-sm mb-4">Click the buttons above to add elements to your formula</p>
-                    <div className="text-xs text-gray-400 space-y-1">
-                      <p>• Click on any element to add nested components inside it</p>
-                      <p>• Use operators to connect attributes and values</p>
-                      <p>• Use functions for mathematical operations</p>
-                      <p>• Use groups to control order of operations</p>
+              <div className={styles.formulaTreeSection}>
+                <h4 className={styles.formulaTreeTitle}>Formula Tree:</h4>
+                <div className={styles.formulaTreeContainer}>
+                  {state?.nodes.filter(node => !node.parentId).length === 0 ? (
+                    <div className={styles.emptyState}>
+                      <Info size={48} className={styles.emptyStateIcon} />
+                      <p className={styles.emptyStateTitle}>Start Building Your Formula</p>
+                      <p className={styles.emptyStateDescription}>Click the buttons above to add elements to your formula</p>
+                      <div className={styles.emptyStateTips}>
+                        <p>• Click on any element to add nested components inside it</p>
+                        <p>• Use operators to connect attributes and values</p>
+                        <p>• Use functions for mathematical operations</p>
+                        <p>• Use groups to control order of operations</p>
+                      </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {state?.nodes.filter(node => !node.parentId).map(node => renderNode(node))}
-                  </div>
-                )}
+                  ) : (
+                    <div className={styles.nodeContainer}>
+                      {state?.nodes.filter(node => !node.parentId).map(node => renderNode(node))}
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </>
@@ -1326,10 +1242,10 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
       {/* Context Menu */}
       {contextMenu.show && (
         <div 
-          className="fixed z-50 bg-white border border-gray-300 rounded-lg shadow-lg py-2 min-w-[150px]"
+          className={styles.contextMenu}
           style={{ left: contextMenu.x, top: contextMenu.y }}
         >
-          <div className="px-3 py-1 text-xs text-gray-500 border-b border-gray-200">
+          <div className={styles.contextMenuHeader}>
             {state?.nodes.find(n => n.id === contextMenu.nodeId)?.type === 'function' 
               ? 'Add argument to function:' 
               : `Insert ${contextMenu.position} this element:`
@@ -1337,37 +1253,37 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
           </div>
           <button
             onClick={() => handleContextMenuAction('attribute')}
-            className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+            className={`${styles.contextMenuItem} ${styles.blue}`}
           >
-            <Plus size={14} className="text-blue-500" />
+            <Plus size={14} />
             Attribute
           </button>
           <button
             onClick={() => handleContextMenuAction('operator')}
-            className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+            className={`${styles.contextMenuItem} ${styles.green}`}
           >
-            <span className="text-sm font-mono text-green-500">⚡</span>
+            <span className="text-sm font-mono">⚡</span>
             Operator
           </button>
           <button
             onClick={() => handleContextMenuAction('value')}
-            className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+            className={`${styles.contextMenuItem} ${styles.orange}`}
           >
-            <span className="text-sm text-orange-500">#</span>
+            <span className="text-sm">#</span>
             Value
           </button>
           <button
             onClick={() => handleContextMenuAction('function')}
-            className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+            className={`${styles.contextMenuItem} ${styles.purple}`}
           >
-            <Code size={14} className="text-purple-500" />
+            <Code size={14} />
             Function
           </button>
           <button
             onClick={() => handleContextMenuAction('group')}
-            className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 flex items-center gap-2"
+            className={`${styles.contextMenuItem} ${styles.gray}`}
           >
-            <Parentheses size={14} className="text-gray-500" />
+            <Parentheses size={14} />
             Group
           </button>
         </div>
@@ -1376,7 +1292,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
       {/* Click outside to close context menu */}
       {contextMenu.show && (
         <div 
-          className="fixed inset-0 z-40" 
+          className={styles.contextMenuOverlay} 
           onClick={hideContextMenu}
         />
       )}
