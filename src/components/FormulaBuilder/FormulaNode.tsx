@@ -1,7 +1,7 @@
 import React from 'react';
 import { Plus, X, Parentheses, Code } from 'lucide-react';
-import { FormulaNode as FormulaNodeType, MathOperator, MathFunction } from './types';
-import { OPERATORS, FUNCTIONS, FUNCTION_SIGNATURES, OPERATOR_DESCRIPTIONS } from './types';
+import { FormulaNode as FormulaNodeType, MathOperator, MathFunction, LogicalOperator, LogicalFunction } from './types';
+import { ALL_OPERATORS, ALL_FUNCTIONS, FUNCTION_SIGNATURES, OPERATOR_DESCRIPTIONS } from './types';
 import { getAllowedActions } from './utils';
 import styles from '../FormulaBuilder.module.css';
 
@@ -38,7 +38,7 @@ export const FormulaNode: React.FC<FormulaNodeProps> = ({
   generateId,
   setState
 }) => {
-  const allowedActions = getAllowedActions(node);
+  const allowedActions = getAllowedActions(node, allNodes);
 
   return (
     <div className={styles.nodeContainer}>
@@ -75,12 +75,12 @@ export const FormulaNode: React.FC<FormulaNodeProps> = ({
           <div className="flex items-center gap-2">
             <select
               value={node.operator || ''}
-              onChange={(e) => onUpdate(node.id, { operator: e.target.value as MathOperator })}
+              onChange={(e) => onUpdate(node.id, { operator: e.target.value as MathOperator | LogicalOperator })}
               className={`${styles.nodeSelect} font-mono`}
               onClick={(e) => e.stopPropagation()}
             >
               <option value="">Select operator</option>
-              {OPERATORS.map(op => (
+              {ALL_OPERATORS.map(op => (
                 <option key={op} value={op}>{op}</option>
               ))}
             </select>
@@ -98,12 +98,39 @@ export const FormulaNode: React.FC<FormulaNodeProps> = ({
             <div className="flex items-center gap-2">
               <select
                 value={node.function || ''}
-                onChange={(e) => onUpdate(node.id, { function: e.target.value as MathFunction })}
+                onChange={(e) => {
+                  const selectedFunction = e.target.value as MathFunction | LogicalFunction;
+                  onUpdate(node.id, { function: selectedFunction });
+                  
+                  // Auto-create argument groups when function is selected
+                  if (selectedFunction) {
+                    const sig = FUNCTION_SIGNATURES[selectedFunction];
+                    if (sig && sig.arity !== 'variadic') {
+                      const slots = typeof sig.arity === 'number' ? sig.arity : 1;
+                      
+                      // Create argument groups for each slot
+                      const newGroups: FormulaNodeType[] = [];
+                      for (let i = 0; i < slots; i++) {
+                        newGroups.push({
+                          id: generateId(),
+                          type: 'group',
+                          parentId: node.id,
+                          argumentIndex: i
+                        });
+                      }
+                      
+                      setState(prev => ({
+                        ...prev!,
+                        nodes: [...prev!.nodes, ...newGroups]
+                      }));
+                    }
+                  }
+                }}
                 className={styles.nodeSelect}
                 onClick={(e) => e.stopPropagation()}
               >
                 <option value="">Select function</option>
-                {FUNCTIONS.map(func => (
+                {ALL_FUNCTIONS.map(func => (
                   <option key={func} value={func}>{func}</option>
                 ))}
               </select>
@@ -125,47 +152,30 @@ export const FormulaNode: React.FC<FormulaNodeProps> = ({
                 return (
                   <div className={styles.functionArgs}>
                     {Array.from({ length: typeof slots === 'number' ? slots : children.length + 1 }).map((_, idx) => {
-                      const argChildren = children.filter(child => {
-                        return true;
-                      });
+                      // Find existing argument group for this slot
+                      const existingArgGroup = children.find(child => 
+                        child.type === 'group' && child.argumentIndex === idx
+                      );
                       
                       return (
                         <div key={idx} className={styles.functionArg}>
                           <div className={styles.functionArgHeader}>
                             <span className={styles.functionArgLabel}>{sig.labels[idx] || `Arg ${idx + 1}`}</span>
-                            {argChildren.length === 0 && (
-                              <button
-                                className={styles.functionArgButton}
-                                onClick={e => {
-                                  e.stopPropagation();
-                                  const newNode: FormulaNodeType = {
-                                    id: generateId(),
-                                    type: 'attribute',
-                                    parentId: node.id
-                                  };
-                                  setState(prev => ({
-                                    ...prev!,
-                                    nodes: [...prev!.nodes, newNode],
-                                    selectedNodeId: newNode.id
-                                  }));
-                                }}
-                              >
-                                + Add {sig.labels[idx] || 'argument'}
-                              </button>
-                            )}
                           </div>
                           
-                          {argChildren.length > 0 && (
+                          {/* Show argument group content */}
+                          {existingArgGroup && (
                             <div className={styles.functionArgContent}>
                               <div className={styles.functionArgActions}>
                                 <button
                                   className={styles.functionArgButton}
                                   onClick={e => {
                                     e.stopPropagation();
+                                    // Add empty attribute node as child of the group
                                     const newNode: FormulaNodeType = {
                                       id: generateId(),
                                       type: 'attribute',
-                                      parentId: node.id
+                                      parentId: existingArgGroup.id
                                     };
                                     setState(prev => ({
                                       ...prev!,
@@ -190,26 +200,6 @@ export const FormulaNode: React.FC<FormulaNodeProps> = ({
                     <div className={styles.functionArg}>
                       <div className={styles.functionArgHeader}>
                         <span className={styles.functionArgLabel}>Argument</span>
-                        {children.length === 0 && (
-                          <button
-                            className={styles.functionArgButton}
-                            onClick={e => {
-                              e.stopPropagation();
-                              const newNode: FormulaNodeType = {
-                                id: generateId(),
-                                type: 'attribute',
-                                parentId: node.id
-                              };
-                              setState(prev => ({
-                                ...prev!,
-                                nodes: [...prev!.nodes, newNode],
-                                selectedNodeId: newNode.id
-                              }));
-                            }}
-                          >
-                            + Add argument
-                          </button>
-                        )}
                       </div>
                       
                       {children.length > 0 && (
@@ -219,16 +209,20 @@ export const FormulaNode: React.FC<FormulaNodeProps> = ({
                               className={styles.functionArgButton}
                               onClick={e => {
                                 e.stopPropagation();
-                                const newNode: FormulaNodeType = {
-                                  id: generateId(),
-                                  type: 'attribute',
-                                  parentId: node.id
-                                };
-                                setState(prev => ({
-                                  ...prev!,
-                                  nodes: [...prev!.nodes, newNode],
-                                  selectedNodeId: newNode.id
-                                }));
+                                // Add empty attribute node as child of the first group
+                                const firstGroup = children.find(child => child.type === 'group');
+                                if (firstGroup) {
+                                  const newNode: FormulaNodeType = {
+                                    id: generateId(),
+                                    type: 'attribute',
+                                    parentId: firstGroup.id
+                                  };
+                                  setState(prev => ({
+                                    ...prev!,
+                                    nodes: [...prev!.nodes, newNode],
+                                    selectedNodeId: newNode.id
+                                  }));
+                                }
                               }}
                             >
                               + Add element

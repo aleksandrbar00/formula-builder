@@ -78,7 +78,19 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
           return node.operator || '';
         case 'function':
           const childNodes = allNodes.filter(n => n.parentId === node.id);
-          return node.function ? `${node.function}(${generateFormulaString(childNodes, attrs, allNodes)})` : 'function(...)';
+          
+          // Sort argument groups by argumentIndex
+          const argumentGroups = childNodes
+            .filter(child => child.type === 'group' && typeof child.argumentIndex === 'number')
+            .sort((a, b) => (a.argumentIndex || 0) - (b.argumentIndex || 0));
+          
+          // Generate string for each argument group
+          const argumentStrings = argumentGroups.map(group => {
+            const groupChildren = allNodes.filter(n => n.parentId === group.id);
+            return generateFormulaString(groupChildren, attrs, allNodes);
+          });
+          
+          return node.function ? `${node.function}(${argumentStrings.join(', ')})` : 'function(...)';
         case 'value':
           return node.value?.toString() || '0';
         case 'group':
@@ -299,9 +311,11 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                 <h4>Basic Operations:</h4>
                 <ul className={styles.helpList}>
                   <li><strong>Attributes:</strong> Select from your data fields</li>
-                  <li><strong>Operators:</strong> +, -, *, /, ** (power), % (modulo)</li>
+                  <li><strong>Math Operators:</strong> +, -, *, /, ** (power), % (modulo)</li>
+                  <li><strong>Logical Operators:</strong> AND, OR, NOT, ==, !=, &gt;, &lt;, &gt;=, &lt;=</li>
                   <li><strong>Values:</strong> Enter constant numbers</li>
-                  <li><strong>Functions:</strong> Mathematical operations like sqrt, abs, etc.</li>
+                  <li><strong>Math Functions:</strong> Mathematical operations (1-2 arguments)</li>
+                  <li><strong>Logical Functions:</strong> IF, AND, OR, NOT, ISNULL, ISNOTNULL</li>
                   <li><strong>Groups:</strong> Use parentheses for order of operations</li>
                 </ul>
               </div>
@@ -312,6 +326,12 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                   <li><code>sqrt(Revenue)</code> - Square root of revenue</li>
                   <li><code>(Price - Cost) * 0.2</code> - 20% markup calculation</li>
                   <li><code>abs(Profit)</code> - Absolute value of profit</li>
+                  <li><code>min(Price, Cost)</code> - Minimum of two values</li>
+                  <li><code>max(Revenue, 1000)</code> - Maximum of revenue and 1000</li>
+                  <li><code>pow(2, 3)</code> - 2 raised to power 3</li>
+                  <li><code>Age &gt; 18 AND Income &gt; 50000</code> - Logical condition</li>
+                  <li><code>IF(VIP == true, Price * 0.9, Price)</code> - Conditional pricing</li>
+                  <li><code>NOT ISNULL(Email)</code> - Check if email exists</li>
                 </ul>
               </div>
             </div>
