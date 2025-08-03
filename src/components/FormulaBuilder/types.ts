@@ -3,6 +3,15 @@ export type LogicalOperator = 'AND' | 'OR' | 'NOT' | '==' | '!=' | '>' | '<' | '
 export type MathFunction = 'abs' | 'sin' | 'cos' | 'tan' | 'sqrt' | 'log' | 'exp' | 'floor' | 'ceil' | 'round' | 'pow' | 'min' | 'max' | 'atan2';
 export type LogicalFunction = 'IF' | 'AND' | 'OR' | 'NOT' | 'ISNULL' | 'ISNOTNULL';
 
+// Type system for formula validation
+export type FormulaDataType = 'number' | 'boolean' | 'string' | 'unknown';
+
+export interface TypeValidationResult {
+  isValid: boolean;
+  dataType: FormulaDataType;
+  errors: string[];
+}
+
 export interface FormulaNode {
   id: string;
   type: 'attribute' | 'operator' | 'function' | 'value' | 'group';

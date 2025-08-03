@@ -1,6 +1,358 @@
-import { FormulaNode, MathOperator, MathFunction, LogicalOperator, LogicalFunction, ALL_OPERATORS, ALL_FUNCTIONS, FUNCTION_SIGNATURES } from './types';
+import { FormulaNode, MathOperator, MathFunction, LogicalOperator, LogicalFunction, ALL_OPERATORS, ALL_FUNCTIONS, FUNCTION_SIGNATURES, FormulaDataType, TypeValidationResult, OPERATORS, LOGICAL_OPERATORS, FUNCTIONS, LOGICAL_FUNCTIONS } from './types';
 
 export const generateId = () => `node_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+
+// Type inference and validation functions
+export const getAttributeDataType = (attributeType: string): FormulaDataType => {
+  switch (attributeType.toLowerCase()) {
+    case 'number':
+    case 'integer':
+    case 'float':
+    case 'double':
+    case 'decimal':
+      return 'number';
+    case 'boolean':
+    case 'bool':
+      return 'boolean';
+    case 'string':
+    case 'text':
+    case 'varchar':
+      return 'string';
+    default:
+      return 'unknown';
+  }
+};
+
+export const getOperatorResultType = (operator: MathOperator | LogicalOperator, leftType: FormulaDataType, rightType: FormulaDataType): TypeValidationResult => {
+  const errors: string[] = [];
+  
+  if (OPERATORS.includes(operator as MathOperator)) {
+    // Mathematical operators require numeric operands
+    if (leftType !== 'number' && leftType !== 'unknown') {
+      errors.push(`Mathematical operator '${operator}' requires numeric operands, but left operand is ${leftType}`);
+    }
+    if (rightType !== 'number' && rightType !== 'unknown') {
+      errors.push(`Mathematical operator '${operator}' requires numeric operands, but right operand is ${rightType}`);
+    }
+    
+    return {
+      isValid: errors.length === 0,
+      dataType: 'number',
+      errors
+    };
+  } else if (LOGICAL_OPERATORS.includes(operator as LogicalOperator)) {
+    // Comparison operators can work with same types
+    if (['==', '!='].includes(operator)) {
+      if (leftType !== rightType && leftType !== 'unknown' && rightType !== 'unknown') {
+        errors.push(`Comparison operator '${operator}' requires operands of the same type, but got ${leftType} and ${rightType}`);
+      }
+    } else if (['>', '<', '>=', '<='].includes(operator)) {
+      // Relational operators work with numbers or strings
+      if (leftType !== 'number' && leftType !== 'string' && leftType !== 'unknown') {
+        errors.push(`Relational operator '${operator}' requires numeric or string operands, but left operand is ${leftType}`);
+      }
+      if (rightType !== 'number' && rightType !== 'string' && rightType !== 'unknown') {
+        errors.push(`Relational operator '${operator}' requires numeric or string operands, but right operand is ${rightType}`);
+      }
+      if (leftType !== rightType && leftType !== 'unknown' && rightType !== 'unknown') {
+        errors.push(`Relational operator '${operator}' requires operands of the same type, but got ${leftType} and ${rightType}`);
+      }
+    } else if (['AND', 'OR'].includes(operator)) {
+      // Logical operators require boolean operands
+      if (leftType !== 'boolean' && leftType !== 'unknown') {
+        errors.push(`Logical operator '${operator}' requires boolean operands, but left operand is ${leftType}`);
+      }
+      if (rightType !== 'boolean' && rightType !== 'unknown') {
+        errors.push(`Logical operator '${operator}' requires boolean operands, but right operand is ${rightType}`);
+      }
+    }
+    
+    return {
+      isValid: errors.length === 0,
+      dataType: 'boolean',
+      errors
+    };
+  }
+  
+  return {
+    isValid: false,
+    dataType: 'unknown',
+    errors: [`Unknown operator: ${operator}`]
+  };
+};
+
+export const getFunctionResultType = (functionName: MathFunction | LogicalFunction, argumentTypes: FormulaDataType[]): TypeValidationResult => {
+  const errors: string[] = [];
+  
+  if (FUNCTIONS.includes(functionName as MathFunction)) {
+    // Mathematical functions require numeric arguments and return numbers
+    argumentTypes.forEach((argType, index) => {
+      if (argType !== 'number' && argType !== 'unknown') {
+        errors.push(`Mathematical function '${functionName}' requires numeric arguments, but argument ${index + 1} is ${argType}`);
+      }
+    });
+    
+    return {
+      isValid: errors.length === 0,
+      dataType: 'number',
+      errors
+    };
+  } else if (LOGICAL_FUNCTIONS.includes(functionName as LogicalFunction)) {
+    // Handle specific logical functions
+    switch (functionName) {
+      case 'IF':
+        if (argumentTypes.length >= 1 && argumentTypes[0] !== 'boolean' && argumentTypes[0] !== 'unknown') {
+          errors.push(`IF function requires a boolean condition as first argument, but got ${argumentTypes[0]}`);
+        }
+        // IF function returns the type of its true/false values (we'll assume they should match)
+        if (argumentTypes.length >= 3) {
+          const trueType = argumentTypes[1];
+          const falseType = argumentTypes[2];
+          if (trueType !== falseType && trueType !== 'unknown' && falseType !== 'unknown') {
+            errors.push(`IF function requires true and false values to be of the same type, but got ${trueType} and ${falseType}`);
+          }
+          return {
+            isValid: errors.length === 0,
+            dataType: trueType !== 'unknown' ? trueType : falseType,
+            errors
+          };
+        }
+        break;
+      
+      case 'AND':
+      case 'OR':
+        argumentTypes.forEach((argType, index) => {
+          if (argType !== 'boolean' && argType !== 'unknown') {
+            errors.push(`${functionName} function requires boolean arguments, but argument ${index + 1} is ${argType}`);
+          }
+        });
+        break;
+      
+      case 'NOT':
+        if (argumentTypes.length >= 1 && argumentTypes[0] !== 'boolean' && argumentTypes[0] !== 'unknown') {
+          errors.push(`NOT function requires a boolean argument, but got ${argumentTypes[0]}`);
+        }
+        break;
+      
+      case 'ISNULL':
+      case 'ISNOTNULL':
+        // These functions can accept any type and return boolean
+        break;
+    }
+    
+    return {
+      isValid: errors.length === 0,
+      dataType: 'boolean',
+      errors
+    };
+  }
+  
+  return {
+    isValid: false,
+    dataType: 'unknown',
+    errors: [`Unknown function: ${functionName}`]
+  };
+};
+
+export const inferNodeType = (
+  node: FormulaNode,
+  attributes: Array<{ id: string; name: string; type: string }>,
+  allNodes: FormulaNode[]
+): TypeValidationResult => {
+  switch (node.type) {
+    case 'attribute':
+      if (node.attributeId) {
+        const attr = attributes.find(a => a.id === node.attributeId);
+        if (attr) {
+          return {
+            isValid: true,
+            dataType: getAttributeDataType(attr.type),
+            errors: []
+          };
+        }
+      }
+      return {
+        isValid: false,
+        dataType: 'unknown',
+        errors: ['Attribute not found']
+      };
+    
+    case 'value':
+      return {
+        isValid: true,
+        dataType: 'number',
+        errors: []
+      };
+    
+    case 'operator':
+      // For operators, we need to check the surrounding operands
+      return {
+        isValid: true,
+        dataType: OPERATORS.includes(node.operator as MathOperator) ? 'number' : 'boolean',
+        errors: []
+      };
+    
+    case 'function':
+      if (node.function) {
+        const children = allNodes.filter(n => n.parentId === node.id);
+        const argumentGroups = children
+          .filter(child => child.type === 'group' && typeof child.argumentIndex === 'number')
+          .sort((a, b) => (a.argumentIndex || 0) - (b.argumentIndex || 0));
+        
+        const argumentTypes = argumentGroups.map(group => {
+          const groupChildren = allNodes.filter(n => n.parentId === group.id);
+          if (groupChildren.length === 0) return 'unknown';
+          
+          // Evaluate the entire expression within the argument group
+          const expressionResult = validateExpressionTypes(groupChildren, attributes, allNodes);
+          return expressionResult.dataType;
+        });
+        
+        return getFunctionResultType(node.function, argumentTypes);
+      }
+      return {
+        isValid: false,
+        dataType: 'unknown',
+        errors: ['Function not specified']
+      };
+    
+    case 'group':
+      const children = allNodes.filter(n => n.parentId === node.id);
+      if (children.length === 0) {
+        return {
+          isValid: false,
+          dataType: 'unknown',
+          errors: ['Empty group']
+        };
+      }
+      
+      // Evaluate the expression within the group
+      return validateExpressionTypes(children, attributes, allNodes);
+    
+    default:
+      return {
+        isValid: false,
+        dataType: 'unknown',
+        errors: ['Unknown node type']
+      };
+  }
+};
+
+export const validateExpressionTypes = (
+  nodes: FormulaNode[],
+  attributes: Array<{ id: string; name: string; type: string }>,
+  allNodes: FormulaNode[]
+): TypeValidationResult => {
+  const errors: string[] = [];
+  let resultType: FormulaDataType = 'unknown';
+  
+  if (nodes.length === 0) {
+    return {
+      isValid: false,
+      dataType: 'unknown',
+      errors: ['Empty expression']
+    };
+  }
+  
+  if (nodes.length === 1) {
+    // Single node - just return its type
+    return inferNodeType(nodes[0], attributes, allNodes);
+  }
+  
+  // Check for consecutive operands without operators (this is invalid)
+  const isOperand = (node: FormulaNode) => 
+    node.type === 'attribute' || node.type === 'value' || node.type === 'function' || node.type === 'group';
+  
+  for (let i = 0; i < nodes.length - 1; i++) {
+    const currentNode = nodes[i];
+    const nextNode = nodes[i + 1];
+    
+    if (isOperand(currentNode) && isOperand(nextNode)) {
+      // Two operands in a row - missing operator
+      errors.push(`Missing operator between operands (found ${currentNode.type} followed by ${nextNode.type})`);
+    }
+  }
+  
+  // Check for operators without proper operands
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i];
+    
+    if (node.type === 'operator') {
+      const leftNode = i > 0 ? nodes[i - 1] : null;
+      const rightNode = i < nodes.length - 1 ? nodes[i + 1] : null;
+      
+      if (!leftNode || !isOperand(leftNode)) {
+        errors.push(`Operator '${node.operator}' is missing left operand`);
+      }
+      if (!rightNode || !isOperand(rightNode)) {
+        errors.push(`Operator '${node.operator}' is missing right operand`);
+      }
+    }
+  }
+  
+  // If we found structural errors, return early
+  if (errors.length > 0) {
+    return {
+      isValid: false,
+      dataType: 'unknown',
+      errors
+    };
+  }
+  
+  // Multiple nodes - validate operator expressions and types
+  // Process operators from left to right to determine the final result type
+  let currentType: FormulaDataType = 'unknown';
+  
+  for (let i = 0; i < nodes.length; i++) {
+    const node = nodes[i];
+    
+    if (node.type === 'operator') {
+      const leftNode = nodes[i - 1];
+      const rightNode = nodes[i + 1];
+      
+      // Get the types of the operands
+      let leftType: FormulaDataType;
+      let rightType: FormulaDataType;
+      
+      // For the left operand, use the current accumulated type if this isn't the first operator
+      if (i > 2 && currentType !== 'unknown') {
+        leftType = currentType;
+      } else {
+        const leftResult = inferNodeType(leftNode, attributes, allNodes);
+        errors.push(...leftResult.errors);
+        leftType = leftResult.dataType;
+      }
+      
+      const rightResult = inferNodeType(rightNode, attributes, allNodes);
+      errors.push(...rightResult.errors);
+      rightType = rightResult.dataType;
+      
+      if (node.operator) {
+        const operatorResult = getOperatorResultType(node.operator, leftType, rightType);
+        errors.push(...operatorResult.errors);
+        currentType = operatorResult.dataType;
+        resultType = operatorResult.dataType;
+      }
+    }
+  }
+  
+  // If no operators, check if we have a single function or operand
+  if (nodes.every(node => node.type !== 'operator')) {
+    if (nodes.length === 1) {
+      const nodeResult = inferNodeType(nodes[0], attributes, allNodes);
+      return nodeResult;
+    } else {
+      // This case should have been caught above, but just in case
+      errors.push('Multiple operands without operators');
+    }
+  }
+  
+  return {
+    isValid: errors.length === 0,
+    dataType: resultType,
+    errors
+  };
+};
 
 export const generateFormulaString = (
   nodes: FormulaNode[], 
@@ -124,32 +476,32 @@ export const validateFormula = (
     }
   }
 
-    // Check for incomplete functions
-    nodes.forEach(node => {
-      if (node.type === 'function' && node.function) {
-        const sig = FUNCTION_SIGNATURES[node.function];
-        if (sig && sig.arity !== 'variadic') {
-          const children = nodes.filter(n => n.parentId === node.id);
-          
-          // Count argument groups (groups with argumentIndex)
-          const argumentGroups = children.filter(child => 
-            child.type === 'group' && typeof child.argumentIndex === 'number'
-          );
-          
-          const argumentCount = argumentGroups.length;
-          
-          if (argumentCount !== sig.arity) {
-            if (sig.arity === 1) {
-              errors.push(`${node.function} function needs exactly 1 argument`);
-            } else if (sig.arity === 2) {
-              errors.push(`${node.function} function needs exactly 2 arguments`);
-            } else {
-              errors.push(`${node.function} function needs exactly ${sig.arity} arguments`);
-            }
+  // Check for incomplete functions
+  nodes.forEach(node => {
+    if (node.type === 'function' && node.function) {
+      const sig = FUNCTION_SIGNATURES[node.function];
+      if (sig && sig.arity !== 'variadic') {
+        const children = nodes.filter(n => n.parentId === node.id);
+        
+        // Count argument groups (groups with argumentIndex)
+        const argumentGroups = children.filter(child => 
+          child.type === 'group' && typeof child.argumentIndex === 'number'
+        );
+        
+        const argumentCount = argumentGroups.length;
+        
+        if (argumentCount !== sig.arity) {
+          if (sig.arity === 1) {
+            errors.push(`${node.function} function needs exactly 1 argument`);
+          } else if (sig.arity === 2) {
+            errors.push(`${node.function} function needs exactly 2 arguments`);
+          } else {
+            errors.push(`${node.function} function needs exactly ${sig.arity} arguments`);
           }
         }
       }
-    });
+    }
+  });
 
   // Check for operators without operands
   for (let i = 0; i < rootNodes.length; i++) {
@@ -163,6 +515,43 @@ export const validateFormula = (
       }
     }
   }
+
+  // NEW: Add comprehensive type validation
+  if (rootNodes.length > 0) {
+    const typeValidationResult = validateExpressionTypes(rootNodes, attributes, nodes);
+    errors.push(...typeValidationResult.errors);
+  }
+
+  // Validate individual function argument types and expressions within groups
+  nodes.forEach(node => {
+    if (node.type === 'function' && node.function) {
+      const functionTypeResult = inferNodeType(node, attributes, nodes);
+      errors.push(...functionTypeResult.errors);
+      
+      // Also validate each argument group's expression separately
+      const children = nodes.filter(n => n.parentId === node.id);
+      const argumentGroups = children.filter(child => 
+        child.type === 'group' && typeof child.argumentIndex === 'number'
+      );
+      
+      argumentGroups.forEach(group => {
+        const groupChildren = nodes.filter(n => n.parentId === group.id);
+        if (groupChildren.length > 0) {
+          const groupValidation = validateExpressionTypes(groupChildren, attributes, nodes);
+          errors.push(...groupValidation.errors);
+        }
+      });
+    }
+    
+    // Also validate expressions within regular groups
+    if (node.type === 'group' && !node.parentId) {
+      const groupChildren = nodes.filter(n => n.parentId === node.id);
+      if (groupChildren.length > 0) {
+        const groupValidation = validateExpressionTypes(groupChildren, attributes, nodes);
+        errors.push(...groupValidation.errors);
+      }
+    }
+  });
 
   return { errors, brokenConnections };
 };
