@@ -911,4 +911,91 @@
   position: fixed;
   inset: 0;
   z-index: 40;
+}
+
+/* Interactive Formula Highlighting Styles */
+.interactiveFormula {
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+.formulaFunction {
+  position: relative;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-radius: 0.25rem;
+  padding: 0.1rem 0.2rem;
+  margin: 0.05rem;
+  /* Remove default border and background */
+}
+
+.formulaFunctionHighlighted {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+  box-shadow: 0 0 0 1px rgba(59, 130, 246, 0.3) !important;
+}
+
+.functionName {
+  font-weight: 600;
+  color: #8b5cf6;
+  transition: all 0.2s ease;
+}
+
+.functionNameHighlighted {
+  color: #7c3aed !important;
+  text-shadow: 0 0 2px rgba(124, 58, 237, 0.3) !important;
+}
+
+.functionParen {
+  font-weight: 700;
+  color: #6b7280;
+  transition: all 0.2s ease;
+}
+
+.functionParenHighlighted {
+  color: #3b82f6 !important;
+  font-size: 1.1em !important;
+  text-shadow: 0 0 2px rgba(59, 130, 246, 0.4) !important;
+}
+
+.functionBody {
+  color: #374151;
+}
+
+/* Depth-based styling for nested functions - only subtle borders by default */
+.formulaFunction[style*="--function-depth: 0"] {
+  border-left: 2px solid rgba(59, 130, 246, 0.3);
+}
+
+.formulaFunction[style*="--function-depth: 1"] {
+  border-left: 2px solid rgba(16, 185, 129, 0.3);
+}
+
+.formulaFunction[style*="--function-depth: 2"] {
+  border-left: 2px solid rgba(245, 158, 11, 0.3);
+}
+
+.formulaFunction[style*="--function-depth: 3"] {
+  border-left: 2px solid rgba(239, 68, 68, 0.3);
+}
+
+/* Hover effects for different depths - more prominent on hover */
+.formulaFunction[style*="--function-depth: 0"]:hover {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-left: 3px solid #3b82f6;
+}
+
+.formulaFunction[style*="--function-depth: 1"]:hover {
+  background-color: rgba(16, 185, 129, 0.1);
+  border-left: 3px solid #10b981;
+}
+
+.formulaFunction[style*="--function-depth: 2"]:hover {
+  background-color: rgba(245, 158, 11, 0.1);
+  border-left: 3px solid #f59e0b;
+}
+
+.formulaFunction[style*="--function-depth: 3"]:hover {
+  background-color: rgba(239, 68, 68, 0.1);
+  border-left: 3px solid #ef4444;
 } 

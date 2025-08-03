@@ -2,6 +2,69 @@ import { FormulaNode, MathOperator, MathFunction, LogicalOperator, LogicalFuncti
 
 export const generateId = () => `node_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
+// Function boundary detection for highlighting
+export interface FunctionBoundary {
+  functionName: string;
+  startIndex: number;
+  endIndex: number;
+  openParenIndex: number;
+  closeParenIndex: number;
+  depth: number;
+  id: string;
+}
+
+export const parseFunctionBoundaries = (formulaString: string): FunctionBoundary[] => {
+  const boundaries: FunctionBoundary[] = [];
+  const functionNames = [...FUNCTIONS, ...LOGICAL_FUNCTIONS];
+  
+  // Stack to track nested functions
+  const stack: { name: string; startIndex: number; openParenIndex: number; depth: number; id: string }[] = [];
+  let currentDepth = 0;
+  
+  for (let i = 0; i < formulaString.length; i++) {
+    const char = formulaString[i];
+    
+    // Check if we're at the start of a function
+    for (const funcName of functionNames) {
+      if (formulaString.substring(i, i + funcName.length) === funcName) {
+        // Check if next character is an opening parenthesis
+        const nextParenIndex = i + funcName.length;
+        if (nextParenIndex < formulaString.length && formulaString[nextParenIndex] === '(') {
+          const functionId = `func_${generateId()}`;
+          stack.push({
+            name: funcName,
+            startIndex: i,
+            openParenIndex: nextParenIndex,
+            depth: currentDepth,
+            id: functionId
+          });
+          currentDepth++;
+          i = nextParenIndex; // Skip to the opening parenthesis
+          break;
+        }
+      }
+    }
+    
+    // Check for closing parenthesis
+    if (char === ')' && stack.length > 0) {
+      const funcInfo = stack.pop()!;
+      currentDepth--;
+      
+      boundaries.push({
+        functionName: funcInfo.name,
+        startIndex: funcInfo.startIndex,
+        endIndex: i,
+        openParenIndex: funcInfo.openParenIndex,
+        closeParenIndex: i,
+        depth: funcInfo.depth,
+        id: funcInfo.id
+      });
+    }
+  }
+  
+  return boundaries.sort((a, b) => a.startIndex - b.startIndex);
+};
+
 // Type inference and validation functions
 export const getAttributeDataType = (attributeType: string): FormulaDataType => {
   switch (attributeType.toLowerCase()) {

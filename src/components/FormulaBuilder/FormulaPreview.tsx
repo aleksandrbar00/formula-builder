@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { CheckCircle, AlertCircle } from 'lucide-react';
 import { FormulaNode, MathOperator } from './types';
 import { OPERATORS } from './types';
-import { generateFormulaString } from './utils';
+import { generateFormulaString, parseFunctionBoundaries, FunctionBoundary } from './utils';
 import styles from '../FormulaBuilder.module.css';
 
 interface FormulaPreviewProps {
@@ -13,6 +13,83 @@ interface FormulaPreviewProps {
   showQuickFix: boolean;
   onQuickFix: (beforeId: string, afterId: string, operator: MathOperator) => void;
 }
+
+// Interactive formula renderer component
+const InteractiveFormulaRenderer: React.FC<{ formulaString: string }> = ({ formulaString }) => {
+  const [hoveredFunction, setHoveredFunction] = useState<string | null>(null);
+  
+  if (!formulaString || formulaString === 'No formula built yet') {
+    return <span>{formulaString || 'No formula built yet'}</span>;
+  }
+  
+  // Simple regex-based approach to find functions
+  const functionRegex = /(\b(?:abs|sin|cos|tan|sqrt|log|exp|floor|ceil|round|pow|min|max|atan2|IF|AND|OR|NOT|ISNULL|ISNOTNULL)\s*\([^)]*\))/g;
+  
+  const parts: React.ReactNode[] = [];
+  let lastIndex = 0;
+  let match;
+  let functionIndex = 0;
+  
+  while ((match = functionRegex.exec(formulaString)) !== null) {
+    const fullMatch = match[0];
+    const startIndex = match.index;
+    const endIndex = startIndex + fullMatch.length;
+    
+    // Add text before this function
+    if (startIndex > lastIndex) {
+      parts.push(
+        <span key={`text-${functionIndex}`}>
+          {formulaString.substring(lastIndex, startIndex)}
+        </span>
+      );
+    }
+    
+    // Extract function name and body
+    const parenIndex = fullMatch.indexOf('(');
+    const functionName = fullMatch.substring(0, parenIndex).trim();
+    const functionBody = fullMatch.substring(parenIndex + 1, fullMatch.length - 1);
+    const functionId = `func-${functionIndex}`;
+    
+    const isHovered = hoveredFunction === functionId;
+    
+    // Add the interactive function
+    parts.push(
+      <span
+        key={functionId}
+        className={`${styles.formulaFunction} ${isHovered ? styles.formulaFunctionHighlighted : ''}`}
+        onMouseEnter={() => setHoveredFunction(functionId)}
+        onMouseLeave={() => setHoveredFunction(null)}
+      >
+        <span className={`${styles.functionName} ${isHovered ? styles.functionNameHighlighted : ''}`}>
+          {functionName}
+        </span>
+        <span className={`${styles.functionParen} ${isHovered ? styles.functionParenHighlighted : ''}`}>
+          (
+        </span>
+        <span className={styles.functionBody}>
+          {functionBody}
+        </span>
+        <span className={`${styles.functionParen} ${isHovered ? styles.functionParenHighlighted : ''}`}>
+          )
+        </span>
+      </span>
+    );
+    
+    lastIndex = endIndex;
+    functionIndex++;
+  }
+  
+  // Add any remaining text
+  if (lastIndex < formulaString.length) {
+    parts.push(
+      <span key="text-end">
+        {formulaString.substring(lastIndex)}
+      </span>
+    );
+  }
+  
+  return <span className={styles.interactiveFormula}>{parts}</span>;
+};
 
 export const FormulaPreview: React.FC<FormulaPreviewProps> = ({
   nodes,
@@ -44,7 +121,7 @@ export const FormulaPreview: React.FC<FormulaPreviewProps> = ({
         </div>
       </div>
       <div className={styles.previewCode}>
-        {formulaString || 'No formula built yet'}
+        <InteractiveFormulaRenderer formulaString={formulaString} />
       </div>
       {validationErrors.length > 0 && (
         <div className={styles.previewErrors}>
