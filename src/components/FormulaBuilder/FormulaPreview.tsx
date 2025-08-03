@@ -22,34 +22,67 @@ const InteractiveFormulaRenderer: React.FC<{ formulaString: string }> = ({ formu
     return <span>{formulaString || 'No formula built yet'}</span>;
   }
   
-  // Simple regex-based approach to find functions
-  const functionRegex = /(\b(?:abs|sin|cos|tan|sqrt|log|exp|floor|ceil|round|pow|min|max|atan2|IF|AND|OR|NOT|ISNULL|ISNOTNULL)\s*\([^)]*\))/g;
+  // Find functions with proper nested parentheses handling
+  const findFunctions = (text: string) => {
+    const functions: { start: number; end: number; name: string; body: string }[] = [];
+    const functionNames = ['abs', 'sin', 'cos', 'tan', 'sqrt', 'log', 'exp', 'floor', 'ceil', 'round', 'pow', 'min', 'max', 'atan2', 'IF', 'AND', 'OR', 'NOT', 'ISNULL', 'ISNOTNULL'];
+    
+    for (let i = 0; i < text.length; i++) {
+      // Check if we're at the start of a function
+      for (const funcName of functionNames) {
+        if (text.substring(i, i + funcName.length) === funcName) {
+          // Check if next non-whitespace character is an opening parenthesis
+          let j = i + funcName.length;
+          while (j < text.length && /\s/.test(text[j])) j++;
+          
+          if (j < text.length && text[j] === '(') {
+            // Find matching closing parenthesis
+            let parenCount = 1;
+            let k = j + 1;
+            
+            while (k < text.length && parenCount > 0) {
+              if (text[k] === '(') parenCount++;
+              else if (text[k] === ')') parenCount--;
+              k++;
+            }
+            
+            if (parenCount === 0) {
+              // Found complete function
+              const functionBody = text.substring(j + 1, k - 1);
+              functions.push({
+                start: i,
+                end: k,
+                name: funcName,
+                body: functionBody
+              });
+              
+              // Skip past this function to avoid overlapping matches
+              i = k - 1;
+              break;
+            }
+          }
+        }
+      }
+    }
+    
+    return functions.sort((a, b) => a.start - b.start);
+  };
   
+  const functions = findFunctions(formulaString);
   const parts: React.ReactNode[] = [];
   let lastIndex = 0;
-  let match;
-  let functionIndex = 0;
   
-  while ((match = functionRegex.exec(formulaString)) !== null) {
-    const fullMatch = match[0];
-    const startIndex = match.index;
-    const endIndex = startIndex + fullMatch.length;
-    
+  functions.forEach((func, functionIndex) => {
     // Add text before this function
-    if (startIndex > lastIndex) {
+    if (func.start > lastIndex) {
       parts.push(
         <span key={`text-${functionIndex}`}>
-          {formulaString.substring(lastIndex, startIndex)}
+          {formulaString.substring(lastIndex, func.start)}
         </span>
       );
     }
     
-    // Extract function name and body
-    const parenIndex = fullMatch.indexOf('(');
-    const functionName = fullMatch.substring(0, parenIndex).trim();
-    const functionBody = fullMatch.substring(parenIndex + 1, fullMatch.length - 1);
     const functionId = `func-${functionIndex}`;
-    
     const isHovered = hoveredFunction === functionId;
     
     // Add the interactive function
@@ -61,13 +94,13 @@ const InteractiveFormulaRenderer: React.FC<{ formulaString: string }> = ({ formu
         onMouseLeave={() => setHoveredFunction(null)}
       >
         <span className={`${styles.functionName} ${isHovered ? styles.functionNameHighlighted : ''}`}>
-          {functionName}
+          {func.name}
         </span>
         <span className={`${styles.functionParen} ${isHovered ? styles.functionParenHighlighted : ''}`}>
           (
         </span>
         <span className={styles.functionBody}>
-          {functionBody}
+          {func.body}
         </span>
         <span className={`${styles.functionParen} ${isHovered ? styles.functionParenHighlighted : ''}`}>
           )
@@ -75,9 +108,8 @@ const InteractiveFormulaRenderer: React.FC<{ formulaString: string }> = ({ formu
       </span>
     );
     
-    lastIndex = endIndex;
-    functionIndex++;
-  }
+    lastIndex = func.end;
+  });
   
   // Add any remaining text
   if (lastIndex < formulaString.length) {
