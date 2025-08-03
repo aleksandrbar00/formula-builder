@@ -595,6 +595,46 @@
   background-color: #bfdbfe;
 }
 
+.functionArgHeader {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.functionArgContent {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  width: 100%;
+  margin-left: 1rem;
+}
+
+.functionArgPreview {
+  font-family: monospace;
+  font-size: 0.875rem;
+  color: #374151;
+  background-color: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  min-height: 1.5rem;
+  display: flex;
+  align-items: center;
+}
+
+.functionArgActions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.functionArgChildren {
+  margin-left: 1rem;
+  border-left: 2px solid #e5e7eb;
+  padding-left: 0.5rem;
+  margin-top: 0.25rem;
+}
+
 .groupContent {
   display: flex;
   align-items: center;
