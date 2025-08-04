@@ -23,7 +23,8 @@ export const FormulaBuilderDemo: React.FC = () => {
   });
 
   const handleFormulaChange = (formula: FormulaBuilderState) => {
-    setFormulaState(formula);
+    // Don't update the state that gets passed back as initialFormula
+    // setFormulaState(formula);
     console.log('Formula changed:', formula);
   };
 
@@ -32,7 +33,7 @@ export const FormulaBuilderDemo: React.FC = () => {
       <FormulaBuilder
         attributes={SAMPLE_ATTRIBUTES}
         onFormulaChange={handleFormulaChange}
-        initialFormula={formulaState}
+        initialFormula={undefined}
       />
     </div>
   );

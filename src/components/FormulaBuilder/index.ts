@@ -1,5 +1,5 @@
-export { FormulaBuilder } from './FormulaBuilder';
-export { FormulaNode } from './FormulaNode';
+export { FormulaBuilder } from './FormulaBuilderWithReatom';
+export { FormulaNode } from './FormulaNodeWithStore';
 export { FormulaPreview } from './FormulaPreview';
 export { ContextMenu } from './ContextMenu';
 export * from './types';

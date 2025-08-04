@@ -633,6 +633,48 @@ const parseTokensToNodes = (
         parentId
       });
       i++;
+    } else if (token.type === 'paren' && token.value === '(') {
+      // Handle standalone parentheses (groups)
+      i++; // Skip opening paren
+      
+      // Find matching closing parenthesis
+      let parenCount = 1;
+      let groupStart = i;
+      let groupEnd = i;
+      
+      while (groupEnd < tokens.length && parenCount > 0) {
+        if (tokens[groupEnd].type === 'paren') {
+          if (tokens[groupEnd].value === '(') parenCount++;
+          else if (tokens[groupEnd].value === ')') parenCount--;
+        }
+        
+        if (parenCount === 0) {
+          break; // Found matching closing paren
+        }
+        groupEnd++;
+      }
+      
+      if (parenCount === 0) {
+        // Create group node
+        const groupNode: FormulaNode = {
+          id: generateId(),
+          type: 'group',
+          parentId
+        };
+        nodes.push(groupNode);
+        
+        // Parse content inside parentheses
+        const groupTokens = tokens.slice(groupStart, groupEnd);
+        if (groupTokens.length > 0) {
+          const groupContentNodes = parseTokensToNodes(groupTokens, attributes, groupNode.id);
+          nodes.push(...groupContentNodes);
+        }
+        
+        i = groupEnd + 1; // Skip past closing paren
+      } else {
+        // Unmatched opening paren, treat as unknown
+        i++;
+      }
     } else {
       i++; // Skip unknown tokens
     }

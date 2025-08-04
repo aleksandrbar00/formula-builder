@@ -1,58 +1,126 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
+import { useAtom, useAction } from '@reatom/npm-react';
 import { Plus, X, Parentheses, Code, HelpCircle, Info, Edit3, Copy, RotateCcw, RotateCw, Save, Type } from 'lucide-react';
-import { FormulaBuilderProps, FormulaBuilderState, FormulaNode } from './types';
-import { generateId, validateFormula, getRootAllowedActions, parseTextFormula } from './utils';
-import { FormulaNode as FormulaNodeComponent } from './FormulaNode';
+import { FormulaBuilderProps, FormulaNode } from './types';
+import { getRootAllowedActions, generateFormulaString, generateId } from './utils';
+import { FormulaNode as FormulaNodeComponent } from './FormulaNodeWithStore';
 import { FormulaPreview } from './FormulaPreview';
 import { ContextMenu } from './ContextMenu';
 import styles from '../FormulaBuilder.module.css';
 
-export const FormulaBuilderOriginal: React.FC<FormulaBuilderProps> = ({
+// Import all the store atoms and actions
+import {
+  // State atoms
+  nodesAtom,
+  selectedNodeIdAtom,
+  formulaNameAtom,
+  formulaDescriptionAtom,
+  showHelpAtom,
+  validationErrorsAtom,
+  editModeAtom,
+  textFormulaAtom,
+  editingNodeIdAtom,
+  historyAtom,
+  historyIndexAtom,
+  showQuickFixAtom,
+  brokenConnectionsAtom,
+  contextMenuAtom,
+  formulaStateAtom,
+  
+  // Actions
+  setShowHelpAction,
+  setEditModeAction,
+  setTextFormulaAction,
+  setFormulaNameAction,
+  setFormulaDescriptionAction,
+  setSelectedNodeIdAction,
+  addNodeAction,
+  addNodeFromPositionAction,
+  updateNodeAction,
+  deleteNodeAction,
+  undoAction,
+  redoAction,
+  initializeFormulaAction,
+  validateFormulaAction,
+  applyTextFormulaAction,
+  setContextMenuAction,
+  hideContextMenuAction,
+  updateNodeWithFunctionAction,
+
+} from '../../stores/formulaStore';
+
+export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
   attributes,
   onFormulaChange,
   initialFormula
 }) => {
-  const [state, setState] = useState<FormulaBuilderState>({
-    nodes: [],
-    selectedNodeId: undefined,
-    formulaName: '',
-    formulaDescription: '',
-    ...initialFormula
-  });
+  // Use Reatom atoms
+  const [nodes] = useAtom(nodesAtom);
+  const [selectedNodeId] = useAtom(selectedNodeIdAtom);
+  const [formulaName] = useAtom(formulaNameAtom);
+  const [formulaDescription] = useAtom(formulaDescriptionAtom);
+  const [showHelp] = useAtom(showHelpAtom);
+  const [validationErrors] = useAtom(validationErrorsAtom);
+  const [editMode] = useAtom(editModeAtom);
+  const [textFormula] = useAtom(textFormulaAtom);
+  const [editingNodeId] = useAtom(editingNodeIdAtom);
+  const [history] = useAtom(historyAtom);
+  const [historyIndex] = useAtom(historyIndexAtom);
+  const [showQuickFix] = useAtom(showQuickFixAtom);
+  const [brokenConnections] = useAtom(brokenConnectionsAtom);
+  const [contextMenu] = useAtom(contextMenuAtom);
+  const [formulaState] = useAtom(formulaStateAtom);
+  
+  // Use Reatom actions
+  const setShowHelp = useAction(setShowHelpAction);
+  const setEditMode = useAction(setEditModeAction);
+  const setTextFormula = useAction(setTextFormulaAction);
+  const setFormulaName = useAction(setFormulaNameAction);
+  const setFormulaDescription = useAction(setFormulaDescriptionAction);
+  const setSelectedNodeId = useAction(setSelectedNodeIdAction);
+  const addNode = useAction(addNodeAction);
+  const addNodeFromPosition = useAction(addNodeFromPositionAction);
+  const updateNode = useAction(updateNodeAction);
+  const deleteNode = useAction(deleteNodeAction);
+  const undo = useAction(undoAction);
+  const redo = useAction(redoAction);
+  const initializeFormula = useAction(initializeFormulaAction);
+  const validateFormula = useAction(validateFormulaAction);
+  const applyTextFormula = useAction(applyTextFormulaAction);
+  const setContextMenu = useAction(setContextMenuAction);
+  const hideContextMenu = useAction(hideContextMenuAction);
+  const updateNodeWithFunction = useAction(updateNodeWithFunctionAction);
 
-  const [showHelp, setShowHelp] = useState(false);
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
-  const [editMode, setEditMode] = useState<'visual' | 'text'>('visual');
-  const [textFormula, setTextFormula] = useState('');
-  const [editingNodeId, setEditingNodeId] = useState<string | null>(null);
-  const [history, setHistory] = useState<FormulaBuilderState[]>([]);
-  const [historyIndex, setHistoryIndex] = useState(-1);
-  const [showQuickFix, setShowQuickFix] = useState(false);
-  const [brokenConnections, setBrokenConnections] = useState<{before: string, after: string}[]>([]);
-  const [contextMenu, setContextMenu] = useState<{
-    show: boolean;
-    x: number;
-    y: number;
-    nodeId: string;
-    position: 'before' | 'after';
-  }>({ show: false, x: 0, y: 0, nodeId: '', position: 'after' });
   const textAreaRef = useRef<HTMLTextAreaElement>(null);
 
+  // Initialize formula on mount
   useEffect(() => {
-    onFormulaChange(state);
-    const { errors, brokenConnections } = validateFormula(state.nodes, attributes);
-    setValidationErrors(errors);
-    setBrokenConnections(brokenConnections);
-    setShowQuickFix(brokenConnections.length > 0);
-    addToHistory(state);
-  }, [state, onFormulaChange, attributes]);
+    if (initialFormula) {
+      initializeFormula(initialFormula);
+    }
+  }, [initialFormula]); // Removed initializeFormula from deps
+
+  // Handle formula changes
+  useEffect(() => {
+    onFormulaChange(formulaState);
+  }, [formulaState]); // Only call onFormulaChange
+  
+  // Handle validation separately when nodes change
+  useEffect(() => {
+    validateFormula(attributes);
+  }, [nodes, attributes]);
 
   // Initialize text formula when switching to text mode
   useEffect(() => {
     if (editMode === 'text') {
-      setTextFormula(generateFormulaString(state.nodes.filter(node => !node.parentId), attributes, state.nodes));
+      const generatedFormula = generateFormulaString(
+        nodes.filter(node => !node.parentId), 
+        attributes, 
+        nodes
+      );
+      setTextFormula(generatedFormula);
     }
-  }, [editMode, state.nodes, attributes]);
+  }, [editMode, nodes, attributes]); // Removed setTextFormula from deps
 
   // Close context menu when clicking outside
   useEffect(() => {
@@ -66,143 +134,14 @@ export const FormulaBuilderOriginal: React.FC<FormulaBuilderProps> = ({
     return () => {
       document.removeEventListener('click', handleClickOutside);
     };
-  }, [contextMenu.show]);
-
-  const generateFormulaString = (nodes: FormulaNode[], attrs: Array<{ id: string; name: string; type: string }>, allNodes: FormulaNode[]): string => {
-    return nodes.map(node => {
-      switch (node.type) {
-        case 'attribute':
-          const attr = attrs.find(a => a.id === node.attributeId);
-          return attr ? `{${attr.name}}` : '{attribute}';
-        case 'operator':
-          return node.operator || '';
-        case 'function':
-          const childNodes = allNodes.filter(n => n.parentId === node.id);
-          
-          // Sort argument groups by argumentIndex
-          const argumentGroups = childNodes
-            .filter(child => child.type === 'group' && typeof child.argumentIndex === 'number')
-            .sort((a, b) => (a.argumentIndex || 0) - (b.argumentIndex || 0));
-          
-          // Generate string for each argument group
-          const argumentStrings = argumentGroups.map(group => {
-            const groupChildren = allNodes.filter(n => n.parentId === group.id);
-            return generateFormulaString(groupChildren, attrs, allNodes);
-          });
-          
-          return node.function ? `${node.function}(${argumentStrings.join(', ')})` : 'function(...)';
-        case 'value':
-          return node.value?.toString() || '0';
-        case 'group':
-          const groupChildren = allNodes.filter(n => n.parentId === node.id);
-          return `(${generateFormulaString(groupChildren, attrs, allNodes)})`;
-        default:
-          return '';
-      }
-    }).join(' ');
-  };
-
-  const addToHistory = (newState: FormulaBuilderState) => {
-    const newHistory = history.slice(0, historyIndex + 1);
-    newHistory.push(JSON.parse(JSON.stringify(newState))); // Deep copy
-    setHistory(newHistory);
-    setHistoryIndex(newHistory.length - 1);
-  };
-
-  const undo = () => {
-    if (historyIndex > 0) {
-      const newIndex = historyIndex - 1;
-      setHistoryIndex(newIndex);
-      setState(history[newIndex]);
-    }
-  };
-
-  const redo = () => {
-    if (historyIndex < history.length - 1) {
-      const newIndex = historyIndex + 1;
-      setHistoryIndex(newIndex);
-      setState(history[newIndex]);
-    }
-  };
-
-  const addNode = (type: FormulaNode['type'], parentId?: string, insertAfterId?: string) => {
-    const newNode: FormulaNode = {
-      id: generateId(),
-      type,
-      parentId
-    };
-
-    setState(prev => {
-      if (insertAfterId) {
-        const nodeIndex = prev.nodes.findIndex(node => node.id === insertAfterId);
-        const newNodes = [...prev.nodes];
-        newNodes.splice(nodeIndex + 1, 0, newNode);
-        return {
-          ...prev,
-          nodes: newNodes,
-          selectedNodeId: newNode.id
-        };
-      } else {
-        return {
-          ...prev,
-          nodes: [...prev.nodes, newNode],
-          selectedNodeId: newNode.id
-        };
-      }
-    });
-  };
-
-  const addNodeFromPosition = (type: FormulaNode['type'], position: 'before' | 'after', targetNodeId: string) => {
-    const newNode: FormulaNode = {
-      id: generateId(),
-      type
-    };
-
-    setState(prev => {
-      const targetNode = prev.nodes.find(node => node.id === targetNodeId);
-      if (!targetNode) return prev;
-
-      newNode.parentId = targetNode.parentId;
-
-      const targetIndex = prev.nodes.findIndex(node => node.id === targetNodeId);
-      const newNodes = [...prev.nodes];
-      
-      if (position === 'before') {
-        newNodes.splice(targetIndex, 0, newNode);
-      } else {
-        newNodes.splice(targetIndex + 1, 0, newNode);
-      }
-
-      return {
-        ...prev,
-        nodes: newNodes,
-        selectedNodeId: newNode.id
-      };
-    });
-  };
-
-  const updateNode = (nodeId: string, updates: Partial<FormulaNode>) => {
-    setState(prev => ({
-      ...prev,
-      nodes: prev.nodes.map(node => 
-        node.id === nodeId ? { ...node, ...updates } : node
-      )
-    }));
-  };
-
-  const deleteNode = (nodeId: string) => {
-    setState(prev => {
-      const newNodes = prev.nodes.filter(node => node.id !== nodeId);
-      return {
-        ...prev,
-        nodes: newNodes,
-        selectedNodeId: prev.selectedNodeId === nodeId ? undefined : prev.selectedNodeId
-      };
-    });
-  };
+  }, [contextMenu.show, hideContextMenu]);
 
   const copyFormula = () => {
-    const formulaString = generateFormulaString(state.nodes.filter(node => !node.parentId), attributes, state.nodes);
+    const formulaString = generateFormulaString(
+      nodes.filter(node => !node.parentId), 
+      attributes, 
+      nodes
+    );
     navigator.clipboard.writeText(formulaString);
   };
 
@@ -216,15 +155,9 @@ export const FormulaBuilderOriginal: React.FC<FormulaBuilderProps> = ({
     }
   };
 
-  const applyTextFormula = () => {
+  const handleApplyTextFormula = () => {
     try {
-      const nodes = parseTextFormula(textFormula, attributes);
-      setState(prev => ({
-        ...prev,
-        nodes,
-        selectedNodeId: undefined
-      }));
-      setEditMode('visual');
+      applyTextFormula(textFormula, attributes);
     } catch (error) {
       console.error('Failed to parse formula:', error);
       alert('Неверный формат формулы. Пожалуйста, проверьте синтаксис.');
@@ -248,20 +181,16 @@ export const FormulaBuilderOriginal: React.FC<FormulaBuilderProps> = ({
     });
   };
 
-  const hideContextMenu = () => {
-    setContextMenu({ show: false, x: 0, y: 0, nodeId: '', position: 'after' });
-  };
-
   const handleContextMenuAction = (type: FormulaNode['type']) => {
     addNodeFromPosition(type, contextMenu.position, contextMenu.nodeId);
     hideContextMenu();
   };
 
-  const rootAllowedActions = getRootAllowedActions(state.nodes);
+  const rootAllowedActions = getRootAllowedActions(nodes);
 
   const renderNode = (node: FormulaNode, depth: number = 0) => {
-    const isSelected = state.selectedNodeId === node.id;
-    const childNodes = state.nodes.filter(n => n.parentId === node.id);
+    const isSelected = selectedNodeId === node.id;
+    const childNodes = nodes.filter(n => n.parentId === node.id);
     const isInBrokenConnection = brokenConnections.some(conn => 
       conn.before === node.id || conn.after === node.id
     );
@@ -275,14 +204,14 @@ export const FormulaBuilderOriginal: React.FC<FormulaBuilderProps> = ({
         isSelected={isSelected}
         isInBrokenConnection={isInBrokenConnection}
         childNodes={childNodes}
-        allNodes={state.nodes}
-        onSelect={(nodeId) => setState(prev => ({ ...prev, selectedNodeId: nodeId }))}
+        allNodes={nodes}
+        onSelect={setSelectedNodeId}
         onUpdate={updateNode}
         onDelete={deleteNode}
         onAddNode={addNode}
         onContextMenu={showContextMenu}
-        generateId={generateId}
-        setState={setState}
+        generateId={generateId} // Keep for compatibility
+        setState={() => {}} // This is no longer needed with Reatom
       />
     );
   };
@@ -345,8 +274,8 @@ export const FormulaBuilderOriginal: React.FC<FormulaBuilderProps> = ({
             </label>
             <input
               type="text"
-              value={state.formulaName}
-              onChange={(e) => setState(prev => ({ ...prev, formulaName: e.target.value }))}
+              value={formulaName}
+              onChange={(e) => setFormulaName(e.target.value)}
               className={styles.formInput}
               placeholder="например, общий_доход"
             />
@@ -358,8 +287,8 @@ export const FormulaBuilderOriginal: React.FC<FormulaBuilderProps> = ({
             </label>
             <input
               type="text"
-              value={state.formulaDescription}
-              onChange={(e) => setState(prev => ({ ...prev, formulaDescription: e.target.value }))}
+              value={formulaDescription}
+              onChange={(e) => setFormulaDescription(e.target.value)}
               className={styles.formInput}
               placeholder="например, Рассчитать общий доход от цены и количества"
             />
@@ -424,7 +353,7 @@ export const FormulaBuilderOriginal: React.FC<FormulaBuilderProps> = ({
             </div>
             <div className={styles.textModeButtons}>
               <button
-                onClick={applyTextFormula}
+                onClick={handleApplyTextFormula}
                 className={`${styles.textModeButton} ${styles.primary}`}
               >
                 Применить формулу
@@ -499,7 +428,7 @@ export const FormulaBuilderOriginal: React.FC<FormulaBuilderProps> = ({
               <div className={styles.formulaTreeSection}>
                 <h4 className={styles.formulaTreeTitle}>Дерево формулы:</h4>
                 <div className={styles.formulaTreeContainer}>
-                  {state.nodes.filter(node => !node.parentId).length === 0 ? (
+                  {nodes.filter(node => !node.parentId).length === 0 ? (
                     <div className={styles.emptyState}>
                       <Info size={48} className={styles.emptyStateIcon} />
                       <p className={styles.emptyStateTitle}>Начните создавать вашу формулу</p>
@@ -513,7 +442,7 @@ export const FormulaBuilderOriginal: React.FC<FormulaBuilderProps> = ({
                     </div>
                   ) : (
                     <div className={styles.nodeContainer}>
-                      {state.nodes.filter(node => !node.parentId).map(node => renderNode(node))}
+                      {nodes.filter(node => !node.parentId).map(node => renderNode(node))}
                     </div>
                   )}
                 </div>
@@ -524,7 +453,7 @@ export const FormulaBuilderOriginal: React.FC<FormulaBuilderProps> = ({
       </div>
 
       <FormulaPreview
-        nodes={state.nodes}
+        nodes={nodes}
         attributes={attributes}
         validationErrors={validationErrors}
         brokenConnections={brokenConnections}
@@ -542,4 +471,4 @@ export const FormulaBuilderOriginal: React.FC<FormulaBuilderProps> = ({
       />
     </div>
   );
-}; 
+};

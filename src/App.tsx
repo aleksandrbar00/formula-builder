@@ -1,12 +1,14 @@
-import React from 'react';
 import './App.css';
 import { FormulaBuilderDemo } from './components/FormulaBuilderDemo';
+import { ReatomProvider } from './providers/ReatomProvider';
 
 function App() {
   return (
-    <div className="App">
-      <FormulaBuilderDemo />
-    </div>
+    <ReatomProvider>
+      <div className="App">
+        <FormulaBuilderDemo />
+      </div>
+    </ReatomProvider>
   );
 }
 
