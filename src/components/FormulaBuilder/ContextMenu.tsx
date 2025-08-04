@@ -29,42 +29,42 @@ export const ContextMenu: React.FC<ContextMenuProps> = ({
         style={{ left: x, top: y }}
       >
         <div className={styles.contextMenuHeader}>
-          {`Insert ${position} this element:`}
+          {`Вставить ${position === 'before' ? 'перед' : 'после'} этим элементом:`}
         </div>
         <button
           onClick={() => onAction('attribute')}
           className={`${styles.contextMenuItem} ${styles.blue}`}
         >
           <Plus size={14} />
-          Attribute
+          Атрибут
         </button>
         <button
           onClick={() => onAction('operator')}
           className={`${styles.contextMenuItem} ${styles.green}`}
         >
           <span className="text-sm font-mono">⚡</span>
-          Operator
+          Оператор
         </button>
         <button
           onClick={() => onAction('value')}
           className={`${styles.contextMenuItem} ${styles.orange}`}
         >
           <span className="text-sm">#</span>
-          Value
+          Значение
         </button>
         <button
           onClick={() => onAction('function')}
           className={`${styles.contextMenuItem} ${styles.purple}`}
         >
           <Code size={14} />
-          Function
+          Функция
         </button>
         <button
           onClick={() => onAction('group')}
           className={`${styles.contextMenuItem} ${styles.gray}`}
         >
           <Parentheses size={14} />
-          Group
+          Группа
         </button>
       </div>
 

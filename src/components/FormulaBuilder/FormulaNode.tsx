@@ -56,7 +56,7 @@ export const FormulaNode: React.FC<FormulaNodeProps> = ({
               className={styles.nodeSelect}
               onClick={(e) => e.stopPropagation()}
             >
-              <option value="">Select attribute</option>
+              <option value="">Выберите атрибут</option>
               {attributes.map(attr => (
                 <option key={attr.id} value={attr.id}>
                   {attr.name} ({attr.type})
@@ -79,7 +79,7 @@ export const FormulaNode: React.FC<FormulaNodeProps> = ({
               className={`${styles.nodeSelect} font-mono`}
               onClick={(e) => e.stopPropagation()}
             >
-              <option value="">Select operator</option>
+              <option value="">Выберите оператор</option>
               {ALL_OPERATORS.map(op => (
                 <option key={op} value={op}>{op}</option>
               ))}
@@ -129,7 +129,7 @@ export const FormulaNode: React.FC<FormulaNodeProps> = ({
                 className={styles.nodeSelect}
                 onClick={(e) => e.stopPropagation()}
               >
-                <option value="">Select function</option>
+                <option value="">Выберите функцию</option>
                 {ALL_FUNCTIONS.map(func => (
                   <option key={func} value={func}>{func}</option>
                 ))}
@@ -184,7 +184,7 @@ export const FormulaNode: React.FC<FormulaNodeProps> = ({
                                     }));
                                   }}
                                 >
-                                  + Add element
+                                  + Добавить элемент
                                 </button>
                               </div>
                             </div>
@@ -245,14 +245,14 @@ export const FormulaNode: React.FC<FormulaNodeProps> = ({
             onChange={(e) => onUpdate(node.id, { value: parseFloat(e.target.value) || 0 })}
             className={styles.nodeInput}
             onClick={(e) => e.stopPropagation()}
-            placeholder="0"
+            placeholder="Введите число"
           />
         )}
 
         {node.type === 'group' && (
           <div className={styles.groupContent}>
             <span className={styles.groupBracket}>(</span>
-            <span className={styles.groupCount}>{childNodes.length} items</span>
+            <span className={styles.groupCount}>{childNodes.length} элементов</span>
             <span className={styles.groupBracket}>)</span>
             <button
               className={styles.groupButton}
@@ -270,7 +270,7 @@ export const FormulaNode: React.FC<FormulaNodeProps> = ({
                 }));
               }}
             >
-              + Add item
+              + Добавить элемент
             </button>
           </div>
         )}
@@ -283,7 +283,7 @@ export const FormulaNode: React.FC<FormulaNodeProps> = ({
               onDelete(node.id);
             }}
             className={styles.deleteButton}
-            title="Delete node"
+            title="Удалить узел"
           >
             <X size={14} />
           </button>
@@ -295,7 +295,7 @@ export const FormulaNode: React.FC<FormulaNodeProps> = ({
                 onAddNode('attribute', node.id);
               }}
               className={`${styles.addButton} ${styles.blue}`}
-              title="Add attribute"
+              title="Добавить атрибут"
             >
               <Plus size={14} />
             </button>
@@ -308,7 +308,7 @@ export const FormulaNode: React.FC<FormulaNodeProps> = ({
                 onAddNode('operator', node.id);
               }}
               className={`${styles.addButton} ${styles.green}`}
-              title="Add operator"
+              title="Добавить оператор"
             >
               <span className="text-xs">⚡</span>
             </button>
@@ -321,7 +321,7 @@ export const FormulaNode: React.FC<FormulaNodeProps> = ({
                 onAddNode('value', node.id);
               }}
               className={`${styles.addButton} ${styles.orange}`}
-              title="Add value"
+              title="Добавить значение"
             >
               <span className="text-xs">#</span>
             </button>
@@ -334,7 +334,7 @@ export const FormulaNode: React.FC<FormulaNodeProps> = ({
                 onAddNode('function', node.id);
               }}
               className={`${styles.addButton} ${styles.purple}`}
-              title="Add function"
+              title="Добавить функцию"
             >
               <span className="text-sm font-mono">⚡</span>
             </button>
@@ -347,7 +347,7 @@ export const FormulaNode: React.FC<FormulaNodeProps> = ({
                 onAddNode('group', node.id);
               }}
               className={`${styles.addButton} ${styles.gray}`}
-              title="Add group"
+              title="Добавить группу"
             >
               <span className="text-sm">#</span>
             </button>

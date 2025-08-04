@@ -227,7 +227,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
       setEditMode('visual');
     } catch (error) {
       console.error('Failed to parse formula:', error);
-      alert('Invalid formula format. Please check your syntax.');
+      alert('Неверный формат формулы. Пожалуйста, проверьте синтаксис.');
     }
   };
 
@@ -291,47 +291,47 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
     <div className={styles.container}>
       <div className={styles.header}>
         <div className={styles.headerContent}>
-          <h2 className={styles.title}>Math Formula Builder</h2>
+          <h2 className={styles.title}>Конструктор математических формул</h2>
           <div className={styles.headerButtons}>
             <button
               onClick={() => setShowHelp(!showHelp)}
               className={`${styles.button} ${styles.blue}`}
             >
               <HelpCircle size={16} />
-              {showHelp ? 'Hide Help' : 'Show Help'}
+              {showHelp ? 'Скрыть справку' : 'Показать справку'}
             </button>
           </div>
         </div>
         
         {showHelp && (
           <div className={styles.helpModal}>
-            <h3 className={styles.helpTitle}>How to Build Math Formulas</h3>
+            <h3 className={styles.helpTitle}>Как создавать математические формулы</h3>
             <div className={styles.helpGrid}>
               <div className={styles.helpSection}>
-                <h4>Basic Operations:</h4>
+                <h4>Основные операции:</h4>
                 <ul className={styles.helpList}>
-                  <li><strong>Attributes:</strong> Select from your data fields</li>
-                  <li><strong>Math Operators:</strong> +, -, *, /, ** (power), % (modulo)</li>
-                  <li><strong>Logical Operators:</strong> AND, OR, NOT, ==, !=, &gt;, &lt;, &gt;=, &lt;=</li>
-                  <li><strong>Values:</strong> Enter constant numbers</li>
-                  <li><strong>Math Functions:</strong> Mathematical operations (1-2 arguments)</li>
-                  <li><strong>Logical Functions:</strong> IF, AND, OR, NOT, ISNULL, ISNOTNULL</li>
-                  <li><strong>Groups:</strong> Use parentheses for order of operations</li>
+                  <li><strong>Атрибуты:</strong> Выберите из полей данных</li>
+                  <li><strong>Математические операторы:</strong> +, -, *, /, ** (степень), % (остаток)</li>
+                  <li><strong>Логические операторы:</strong> AND, OR, NOT, ==, !=, &gt;, &lt;, &gt;=, &lt;=</li>
+                  <li><strong>Значения:</strong> Введите постоянные числа</li>
+                  <li><strong>Математические функции:</strong> Математические операции (1-2 аргумента)</li>
+                  <li><strong>Логические функции:</strong> IF, AND, OR, NOT, ISNULL, ISNOTNULL</li>
+                  <li><strong>Группы:</strong> Используйте скобки для порядка операций</li>
                 </ul>
               </div>
               <div className={styles.helpSection}>
-                <h4>Examples:</h4>
+                <h4>Примеры:</h4>
                 <ul className={styles.helpList}>
-                  <li><code>Price * Quantity</code> - Basic multiplication</li>
-                  <li><code>sqrt(Revenue)</code> - Square root of revenue</li>
-                  <li><code>(Price - Cost) * 0.2</code> - 20% markup calculation</li>
-                  <li><code>abs(Profit)</code> - Absolute value of profit</li>
-                  <li><code>min(Price, Cost)</code> - Minimum of two values</li>
-                  <li><code>max(Revenue, 1000)</code> - Maximum of revenue and 1000</li>
-                  <li><code>pow(2, 3)</code> - 2 raised to power 3</li>
-                  <li><code>Age &gt; 18 AND Income &gt; 50000</code> - Logical condition</li>
-                  <li><code>IF(VIP == true, Price * 0.9, Price)</code> - Conditional pricing</li>
-                  <li><code>NOT ISNULL(Email)</code> - Check if email exists</li>
+                  <li><code>Price * Quantity</code> - Базовое умножение</li>
+                  <li><code>sqrt(Revenue)</code> - Квадратный корень дохода</li>
+                  <li><code>(Price - Cost) * 0.2</code> - Расчет наценки 20%</li>
+                  <li><code>abs(Profit)</code> - Абсолютное значение прибыли</li>
+                  <li><code>min(Price, Cost)</code> - Минимум из двух значений</li>
+                  <li><code>max(Revenue, 1000)</code> - Максимум дохода и 1000</li>
+                  <li><code>pow(2, 3)</code> - 2 в степени 3</li>
+                  <li><code>Age &gt; 18 AND Income &gt; 50000</code> - Логическое условие</li>
+                  <li><code>IF(VIP == true, Price * 0.9, Price)</code> - Условное ценообразование</li>
+                  <li><code>NOT ISNULL(Email)</code> - Проверка существования email</li>
                 </ul>
               </div>
             </div>
@@ -341,27 +341,27 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
         <div className={styles.formGrid}>
           <div>
             <label className={styles.formField}>
-              Formula Name
+              Название формулы
             </label>
             <input
               type="text"
               value={state.formulaName}
               onChange={(e) => setState(prev => ({ ...prev, formulaName: e.target.value }))}
               className={styles.formInput}
-              placeholder="e.g., total_revenue"
+              placeholder="например, общий_доход"
             />
           </div>
           
           <div>
             <label className={styles.formField}>
-              Description
+              Описание
             </label>
             <input
               type="text"
               value={state.formulaDescription}
               onChange={(e) => setState(prev => ({ ...prev, formulaDescription: e.target.value }))}
               className={styles.formInput}
-              placeholder="e.g., Calculate total revenue from price and quantity"
+              placeholder="например, Рассчитать общий доход от цены и количества"
             />
           </div>
         </div>
@@ -370,13 +370,13 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
       {/* Edit Mode Toggle */}
       <div className={styles.editModeSection}>
         <div className={styles.editModeHeader}>
-          <h3 className={styles.editModeTitle}>Formula Construction</h3>
+          <h3 className={styles.editModeTitle}>Конструирование формулы</h3>
           <div className={styles.editModeButtons}>
             <button
               onClick={undo}
               disabled={historyIndex <= 0}
               className={`${styles.iconButton} ${historyIndex > 0 ? styles.enabled : styles.disabled}`}
-              title="Undo"
+              title="Отменить"
             >
               <RotateCcw size={16} />
             </button>
@@ -384,14 +384,14 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
               onClick={redo}
               disabled={historyIndex >= history.length - 1}
               className={`${styles.iconButton} ${historyIndex < history.length - 1 ? styles.enabled : styles.disabled}`}
-              title="Redo"
+              title="Повторить"
             >
               <RotateCw size={16} />
             </button>
             <button
               onClick={copyFormula}
               className={`${styles.iconButton} ${styles.enabled}`}
-              title="Copy formula"
+              title="Копировать формулу"
             >
               <Copy size={16} />
             </button>
@@ -400,7 +400,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
               className={`${styles.modeToggleButton} ${editMode === 'text' ? styles.text : styles.visual}`}
             >
               {editMode === 'text' ? <Edit3 size={16} /> : <Type size={16} />}
-              {editMode === 'text' ? 'Visual Mode' : 'Text Mode'}
+              {editMode === 'text' ? 'Визуальный режим' : 'Текстовый режим'}
             </button>
           </div>
         </div>
@@ -409,17 +409,17 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
           <div className={styles.textModeSection}>
             <div>
               <label className={styles.formField}>
-                Edit Formula as Text
+                Редактировать формулу как текст
               </label>
               <textarea
                 ref={textAreaRef}
                 value={textFormula}
                 onChange={(e) => setTextFormula(e.target.value)}
                 className={styles.textArea}
-                placeholder="Enter your formula here... e.g., Price * Quantity + 100"
+                placeholder="Введите вашу формулу здесь... например, Price * Quantity + 100"
               />
               <div className={styles.textAreaHint}>
-                Use attribute names in curly braces: {'{Price}'}, {'{Quantity}'}
+                Используйте имена атрибутов в фигурных скобках: {'{Price}'}, {'{Quantity}'}
               </div>
             </div>
             <div className={styles.textModeButtons}>
@@ -427,19 +427,19 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                 onClick={applyTextFormula}
                 className={`${styles.textModeButton} ${styles.primary}`}
               >
-                Apply Formula
+                Применить формулу
               </button>
               <button
                 onClick={pasteFormula}
                 className={`${styles.textModeButton} ${styles.secondary}`}
               >
-                Paste from Clipboard
+                Вставить из буфера
               </button>
               <button
                 onClick={() => setEditMode('visual')}
                 className={`${styles.textModeButton} ${styles.cancel}`}
               >
-                Cancel
+                Отмена
               </button>
             </div>
           </div>
@@ -447,7 +447,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
           <>
             <div className={styles.visualModeSection}>
               <div className={styles.rootElementsSection}>
-                <h4 className={styles.rootElementsTitle}>Add Root Elements:</h4>
+                <h4 className={styles.rootElementsTitle}>Добавить корневые элементы:</h4>
                 <div className={styles.rootElementsButtons}>
                   <button
                     onClick={() => addNode('attribute')}
@@ -455,7 +455,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                     className={`${styles.rootElementButton} ${styles.attribute} ${!rootAllowedActions.attribute ? styles.disabled : ''}`}
                   >
                     <Plus size={16} />
-                    Attribute
+                    Атрибут
                   </button>
                   
                   <button
@@ -464,7 +464,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                     className={`${styles.rootElementButton} ${styles.operator} ${!rootAllowedActions.operator ? styles.disabled : ''}`}
                   >
                     <span className="text-sm font-mono">⚡</span>
-                    Operator
+                    Оператор
                   </button>
                   
                   <button
@@ -473,7 +473,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                     className={`${styles.rootElementButton} ${styles.function} ${!rootAllowedActions.function ? styles.disabled : ''}`}
                   >
                     <Code size={16} />
-                    Function
+                    Функция
                   </button>
                   
                   <button
@@ -482,7 +482,7 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                     className={`${styles.rootElementButton} ${styles.value} ${!rootAllowedActions.value ? styles.disabled : ''}`}
                   >
                     <span className="text-sm">#</span>
-                    Value
+                    Значение
                   </button>
                   
                   <button
@@ -491,24 +491,24 @@ export const FormulaBuilder: React.FC<FormulaBuilderProps> = ({
                     className={`${styles.rootElementButton} ${styles.group} ${!rootAllowedActions.group ? styles.disabled : ''}`}
                   >
                     <Parentheses size={16} />
-                    Group
+                    Группа
                   </button>
                 </div>
               </div>
 
               <div className={styles.formulaTreeSection}>
-                <h4 className={styles.formulaTreeTitle}>Formula Tree:</h4>
+                <h4 className={styles.formulaTreeTitle}>Дерево формулы:</h4>
                 <div className={styles.formulaTreeContainer}>
                   {state.nodes.filter(node => !node.parentId).length === 0 ? (
                     <div className={styles.emptyState}>
                       <Info size={48} className={styles.emptyStateIcon} />
-                      <p className={styles.emptyStateTitle}>Start Building Your Formula</p>
-                      <p className={styles.emptyStateDescription}>Click the buttons above to add elements to your formula</p>
+                      <p className={styles.emptyStateTitle}>Начните создавать вашу формулу</p>
+                      <p className={styles.emptyStateDescription}>Нажмите кнопки выше, чтобы добавить элементы в формулу</p>
                       <div className={styles.emptyStateTips}>
-                        <p>• Click on any element to add nested components inside it</p>
-                        <p>• Use operators to connect attributes and values</p>
-                        <p>• Use functions for mathematical operations</p>
-                        <p>• Use groups to control order of operations</p>
+                        <p>• Нажмите на любой элемент, чтобы добавить вложенные компоненты внутрь него</p>
+                        <p>• Используйте операторы для соединения атрибутов и значений</p>
+                        <p>• Используйте функции для математических операций</p>
+                        <p>• Используйте группы для контроля порядка операций</p>
                       </div>
                     </div>
                   ) : (

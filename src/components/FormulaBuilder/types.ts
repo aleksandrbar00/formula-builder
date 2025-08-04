@@ -45,123 +45,123 @@ export const FUNCTION_SIGNATURES: Record<string, {
 }> = {
   abs: { 
     arity: 1, 
-    labels: ['Number'], 
-    description: 'Returns the absolute value of a number',
+    labels: ['Число'], 
+    description: 'Возвращает абсолютное значение числа',
     example: 'abs(-5) = 5'
   },
   sin: { 
     arity: 1, 
-    labels: ['Angle (radians)'], 
-    description: 'Returns the sine of an angle',
+    labels: ['Угол (радианы)'], 
+    description: 'Возвращает синус угла',
     example: 'sin(3.14) ≈ 0'
   },
   cos: { 
     arity: 1, 
-    labels: ['Angle (radians)'], 
-    description: 'Returns the cosine of an angle',
+    labels: ['Угол (радианы)'], 
+    description: 'Возвращает косинус угла',
     example: 'cos(0) = 1'
   },
   tan: { 
     arity: 1, 
-    labels: ['Angle (radians)'], 
-    description: 'Returns the tangent of an angle',
+    labels: ['Угол (радианы)'], 
+    description: 'Возвращает тангенс угла',
     example: 'tan(0.785) ≈ 1'
   },
   sqrt: { 
     arity: 1, 
-    labels: ['Number'], 
-    description: 'Returns the square root of a number',
+    labels: ['Число'], 
+    description: 'Возвращает квадратный корень числа',
     example: 'sqrt(16) = 4'
   },
   log: { 
     arity: 1, 
-    labels: ['Number'], 
-    description: 'Returns the natural logarithm of a number',
+    labels: ['Число'], 
+    description: 'Возвращает натуральный логарифм числа',
     example: 'log(2.718) ≈ 1'
   },
   exp: { 
     arity: 1, 
-    labels: ['Number'], 
-    description: 'Returns e raised to the power of a number',
+    labels: ['Число'], 
+    description: 'Возвращает e в степени числа',
     example: 'exp(1) ≈ 2.718'
   },
   floor: { 
     arity: 1, 
-    labels: ['Number'], 
-    description: 'Returns the largest integer less than or equal to a number',
+    labels: ['Число'], 
+    description: 'Возвращает наибольшее целое число, меньшее или равное данному числу',
     example: 'floor(3.7) = 3'
   },
   ceil: { 
     arity: 1, 
-    labels: ['Number'], 
-    description: 'Returns the smallest integer greater than or equal to a number',
+    labels: ['Число'], 
+    description: 'Возвращает наименьшее целое число, большее или равное данному числу',
     example: 'ceil(3.2) = 4'
   },
   round: { 
     arity: 1, 
-    labels: ['Number'], 
-    description: 'Rounds a number to the nearest integer',
+    labels: ['Число'], 
+    description: 'Округляет число до ближайшего целого',
     example: 'round(3.5) = 4'
   },
   pow: { 
     arity: 2, 
-    labels: ['Base', 'Exponent'], 
-    description: 'Raises a number to the power of another number',
+    labels: ['Основание', 'Показатель'], 
+    description: 'Возводит число в степень другого числа',
     example: 'pow(2, 3) = 8'
   },
   min: { 
     arity: 2, 
-    labels: ['Number1', 'Number2'], 
-    description: 'Returns the smaller of two numbers',
+    labels: ['Число1', 'Число2'], 
+    description: 'Возвращает меньшее из двух чисел',
     example: 'min(5, 3) = 3'
   },
   max: { 
     arity: 2, 
-    labels: ['Number1', 'Number2'], 
-    description: 'Returns the larger of two numbers',
+    labels: ['Число1', 'Число2'], 
+    description: 'Возвращает большее из двух чисел',
     example: 'max(5, 3) = 5'
   },
   atan2: { 
     arity: 2, 
     labels: ['Y', 'X'], 
-    description: 'Returns the angle in radians whose tangent is the quotient of its arguments',
+    description: 'Возвращает угол в радианах, тангенс которого равен частному аргументов',
     example: 'atan2(1, 1) ≈ 0.785'
   },
   // Logical functions
   IF: { 
     arity: 3, 
-    labels: ['Condition', 'True Value', 'False Value'], 
-    description: 'Returns one value if condition is true, another if false',
+    labels: ['Условие', 'Значение истины', 'Значение лжи'], 
+    description: 'Возвращает одно значение, если условие истинно, другое - если ложно',
     example: 'IF(Age > 18, "Adult", "Minor")'
   },
   AND: { 
     arity: 'variadic', 
-    labels: ['Condition1', 'Condition2', '...'], 
-    description: 'Returns true if all conditions are true',
+    labels: ['Условие1', 'Условие2', '...'], 
+    description: 'Возвращает истину, если все условия истинны',
     example: 'AND(Age > 18, Income > 50000)'
   },
   OR: { 
     arity: 'variadic', 
-    labels: ['Condition1', 'Condition2', '...'], 
-    description: 'Returns true if any condition is true',
+    labels: ['Условие1', 'Условие2', '...'], 
+    description: 'Возвращает истину, если любое условие истинно',
     example: 'OR(VIP == true, Income > 100000)'
   },
   NOT: { 
     arity: 1, 
-    labels: ['Condition'], 
-    description: 'Returns the opposite of the condition',
+    labels: ['Условие'], 
+    description: 'Возвращает противоположность условия',
     example: 'NOT(VIP == true)'
   },
   ISNULL: { 
     arity: 1, 
-    labels: ['Value'], 
-    description: 'Returns true if the value is null or empty',
+    labels: ['Значение'], 
+    description: 'Возвращает истину, если значение пустое или null',
     example: 'ISNULL(Email)'
   },
   ISNOTNULL: { 
     arity: 1, 
-    labels: ['Value'], 
-    description: 'Returns true if the value is not null or empty',
+    labels: ['Значение'], 
+    description: 'Возвращает истину, если значение не пустое и не null',
     example: 'ISNOTNULL(Email)'
   }
 };

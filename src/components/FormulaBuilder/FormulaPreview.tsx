@@ -19,7 +19,7 @@ const InteractiveFormulaRenderer: React.FC<{ formulaString: string }> = ({ formu
   const [hoveredFunction, setHoveredFunction] = useState<string | null>(null);
   
   if (!formulaString || formulaString === 'No formula built yet') {
-    return <span>{formulaString || 'No formula built yet'}</span>;
+    return <span>{formulaString === 'No formula built yet' ? 'Формула еще не создана' : formulaString || 'Формула еще не создана'}</span>;
   }
   
   // Find functions with proper nested parentheses handling
@@ -136,18 +136,18 @@ export const FormulaPreview: React.FC<FormulaPreviewProps> = ({
   return (
     <div className={styles.previewSection}>
       <div className={styles.previewHeader}>
-        <h3 className={styles.previewTitle}>Formula Preview:</h3>
+        <h3 className={styles.previewTitle}>Предварительный просмотр формулы:</h3>
         <div className={styles.previewStatus}>
           {validationErrors.length === 0 && formulaString && (
             <div className={`${styles.previewStatus} ${styles.valid}`}>
               <CheckCircle size={14} />
-              <span className={styles.previewStatusText}>Valid</span>
+              <span className={styles.previewStatusText}>Действительна</span>
             </div>
           )}
           {validationErrors.length > 0 && (
             <div className={`${styles.previewStatus} ${styles.error}`}>
               <AlertCircle size={14} />
-              <span className={styles.previewStatusText}>{validationErrors.length} error(s)</span>
+              <span className={styles.previewStatusText}>{validationErrors.length} ошибок</span>
             </div>
           )}
         </div>
@@ -157,7 +157,7 @@ export const FormulaPreview: React.FC<FormulaPreviewProps> = ({
       </div>
       {validationErrors.length > 0 && (
         <div className={styles.previewErrors}>
-          <h4 className={styles.previewErrorsTitle}>Issues found:</h4>
+          <h4 className={styles.previewErrorsTitle}>Найдены проблемы:</h4>
           <ul className={styles.previewErrorsList}>
             {validationErrors.map((error, index) => (
               <li key={index}>{error}</li>
@@ -167,7 +167,7 @@ export const FormulaPreview: React.FC<FormulaPreviewProps> = ({
           {/* Quick Fix Section */}
           {showQuickFix && brokenConnections.length > 0 && (
             <div className={styles.previewQuickFix}>
-              <h5 className={styles.previewQuickFixTitle}>Quick Fix:</h5>
+              <h5 className={styles.previewQuickFixTitle}>Быстрое исправление:</h5>
               <div className={styles.previewQuickFixList}>
                 {brokenConnections.map((connection, index) => {
                   const beforeNode = nodes.find(n => n.id === connection.before);

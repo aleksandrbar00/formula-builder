@@ -92,10 +92,10 @@ export const getOperatorResultType = (operator: MathOperator | LogicalOperator, 
   if (OPERATORS.includes(operator as MathOperator)) {
     // Mathematical operators require numeric operands
     if (leftType !== 'number' && leftType !== 'unknown') {
-      errors.push(`Mathematical operator '${operator}' requires numeric operands, but left operand is ${leftType}`);
+      errors.push(`Математический оператор '${operator}' требует числовые операнды, но левый операнд имеет тип ${leftType}`);
     }
     if (rightType !== 'number' && rightType !== 'unknown') {
-      errors.push(`Mathematical operator '${operator}' requires numeric operands, but right operand is ${rightType}`);
+      errors.push(`Математический оператор '${operator}' требует числовые операнды, но правый операнд имеет тип ${rightType}`);
     }
     
     return {
@@ -107,26 +107,26 @@ export const getOperatorResultType = (operator: MathOperator | LogicalOperator, 
     // Comparison operators can work with same types
     if (['==', '!='].includes(operator)) {
       if (leftType !== rightType && leftType !== 'unknown' && rightType !== 'unknown') {
-        errors.push(`Comparison operator '${operator}' requires operands of the same type, but got ${leftType} and ${rightType}`);
+        errors.push(`Оператор сравнения '${operator}' требует операнды одного типа, но получены ${leftType} и ${rightType}`);
       }
     } else if (['>', '<', '>=', '<='].includes(operator)) {
       // Relational operators work with numbers or strings
       if (leftType !== 'number' && leftType !== 'string' && leftType !== 'unknown') {
-        errors.push(`Relational operator '${operator}' requires numeric or string operands, but left operand is ${leftType}`);
+        errors.push(`Оператор отношения '${operator}' требует числовые или строковые операнды, но левый операнд имеет тип ${leftType}`);
       }
       if (rightType !== 'number' && rightType !== 'string' && rightType !== 'unknown') {
-        errors.push(`Relational operator '${operator}' requires numeric or string operands, but right operand is ${rightType}`);
+        errors.push(`Оператор отношения '${operator}' требует числовые или строковые операнды, но правый операнд имеет тип ${rightType}`);
       }
       if (leftType !== rightType && leftType !== 'unknown' && rightType !== 'unknown') {
-        errors.push(`Relational operator '${operator}' requires operands of the same type, but got ${leftType} and ${rightType}`);
+        errors.push(`Оператор отношения '${operator}' требует операнды одного типа, но получены ${leftType} и ${rightType}`);
       }
     } else if (['AND', 'OR'].includes(operator)) {
       // Logical operators require boolean operands
       if (leftType !== 'boolean' && leftType !== 'unknown') {
-        errors.push(`Logical operator '${operator}' requires boolean operands, but left operand is ${leftType}`);
+        errors.push(`Логический оператор '${operator}' требует булевы операнды, но левый операнд имеет тип ${leftType}`);
       }
       if (rightType !== 'boolean' && rightType !== 'unknown') {
-        errors.push(`Logical operator '${operator}' requires boolean operands, but right operand is ${rightType}`);
+        errors.push(`Логический оператор '${operator}' требует булевы операнды, но правый операнд имеет тип ${rightType}`);
       }
     }
     
@@ -140,7 +140,7 @@ export const getOperatorResultType = (operator: MathOperator | LogicalOperator, 
   return {
     isValid: false,
     dataType: 'unknown',
-    errors: [`Unknown operator: ${operator}`]
+    errors: [`Неизвестный оператор: ${operator}`]
   };
 };
 
@@ -151,7 +151,7 @@ export const getFunctionResultType = (functionName: MathFunction | LogicalFuncti
     // Mathematical functions require numeric arguments and return numbers
     argumentTypes.forEach((argType, index) => {
       if (argType !== 'number' && argType !== 'unknown') {
-        errors.push(`Mathematical function '${functionName}' requires numeric arguments, but argument ${index + 1} is ${argType}`);
+        errors.push(`Математическая функция '${functionName}' требует числовые аргументы, но аргумент ${index + 1} имеет тип ${argType}`);
       }
     });
     
@@ -165,14 +165,14 @@ export const getFunctionResultType = (functionName: MathFunction | LogicalFuncti
     switch (functionName) {
       case 'IF':
         if (argumentTypes.length >= 1 && argumentTypes[0] !== 'boolean' && argumentTypes[0] !== 'unknown') {
-          errors.push(`IF function requires a boolean condition as first argument, but got ${argumentTypes[0]}`);
+          errors.push(`Функция IF требует булево условие в качестве первого аргумента, но получен ${argumentTypes[0]}`);
         }
         // IF function returns the type of its true/false values (we'll assume they should match)
         if (argumentTypes.length >= 3) {
           const trueType = argumentTypes[1];
           const falseType = argumentTypes[2];
           if (trueType !== falseType && trueType !== 'unknown' && falseType !== 'unknown') {
-            errors.push(`IF function requires true and false values to be of the same type, but got ${trueType} and ${falseType}`);
+            errors.push(`Функция IF требует, чтобы значения истины и лжи были одного типа, но получены ${trueType} и ${falseType}`);
           }
           return {
             isValid: errors.length === 0,
@@ -186,14 +186,14 @@ export const getFunctionResultType = (functionName: MathFunction | LogicalFuncti
       case 'OR':
         argumentTypes.forEach((argType, index) => {
           if (argType !== 'boolean' && argType !== 'unknown') {
-            errors.push(`${functionName} function requires boolean arguments, but argument ${index + 1} is ${argType}`);
+            errors.push(`Функция ${functionName} требует булевы аргументы, но аргумент ${index + 1} имеет тип ${argType}`);
           }
         });
         break;
       
       case 'NOT':
         if (argumentTypes.length >= 1 && argumentTypes[0] !== 'boolean' && argumentTypes[0] !== 'unknown') {
-          errors.push(`NOT function requires a boolean argument, but got ${argumentTypes[0]}`);
+          errors.push(`Функция NOT требует булев аргумент, но получен ${argumentTypes[0]}`);
         }
         break;
       
@@ -213,7 +213,7 @@ export const getFunctionResultType = (functionName: MathFunction | LogicalFuncti
   return {
     isValid: false,
     dataType: 'unknown',
-    errors: [`Unknown function: ${functionName}`]
+    errors: [`Неизвестная функция: ${functionName}`]
   };
 };
 
@@ -237,7 +237,7 @@ export const inferNodeType = (
       return {
         isValid: false,
         dataType: 'unknown',
-        errors: ['Attribute not found']
+        errors: ['Атрибут не найден']
       };
     
     case 'value':
@@ -276,7 +276,7 @@ export const inferNodeType = (
       return {
         isValid: false,
         dataType: 'unknown',
-        errors: ['Function not specified']
+        errors: ['Функция не указана']
       };
     
     case 'group':
@@ -285,7 +285,7 @@ export const inferNodeType = (
         return {
           isValid: false,
           dataType: 'unknown',
-          errors: ['Empty group']
+          errors: ['Пустая группа']
         };
       }
       
@@ -296,7 +296,7 @@ export const inferNodeType = (
       return {
         isValid: false,
         dataType: 'unknown',
-        errors: ['Unknown node type']
+        errors: ['Неизвестный тип узла']
       };
   }
 };
@@ -313,7 +313,7 @@ export const validateExpressionTypes = (
     return {
       isValid: false,
       dataType: 'unknown',
-      errors: ['Empty expression']
+      errors: ['Пустое выражение']
     };
   }
   
@@ -332,7 +332,7 @@ export const validateExpressionTypes = (
     
     if (isOperand(currentNode) && isOperand(nextNode)) {
       // Two operands in a row - missing operator
-      errors.push(`Missing operator between operands (found ${currentNode.type} followed by ${nextNode.type})`);
+      errors.push(`Отсутствует оператор между операндами (найден ${currentNode.type} за которым следует ${nextNode.type})`);
     }
   }
   
@@ -345,10 +345,10 @@ export const validateExpressionTypes = (
       const rightNode = i < nodes.length - 1 ? nodes[i + 1] : null;
       
       if (!leftNode || !isOperand(leftNode)) {
-        errors.push(`Operator '${node.operator}' is missing left operand`);
+        errors.push(`Оператору '${node.operator}' не хватает левого операнда`);
       }
       if (!rightNode || !isOperand(rightNode)) {
-        errors.push(`Operator '${node.operator}' is missing right operand`);
+        errors.push(`Оператору '${node.operator}' не хватает правого операнда`);
       }
     }
   }
@@ -655,7 +655,7 @@ export const parseTextFormula = (
     return nodes;
   } catch (error) {
     console.error('Error parsing formula:', error);
-    throw new Error('Invalid formula syntax');
+    throw new Error('Неверный синтаксис формулы');
   }
 };
 
@@ -674,7 +674,7 @@ export const validateFormula = (
   );
 
   if (operators.length > 0 && operands.length === 0) {
-    errors.push('Operators need operands (attributes, values, or functions)');
+    errors.push('Операторы нуждаются в операндах (атрибуты, значения или функции)');
   }
 
   // Check for broken connections (operands without operators between them)
@@ -689,7 +689,7 @@ export const validateFormula = (
         before: currentNode.id,
         after: nextNode.id
       });
-      errors.push('Missing operator between operands');
+      errors.push('Отсутствует оператор между операндами');
     }
   }
 
@@ -709,11 +709,11 @@ export const validateFormula = (
         
         if (argumentCount !== sig.arity) {
           if (sig.arity === 1) {
-            errors.push(`${node.function} function needs exactly 1 argument`);
+            errors.push(`Функция ${node.function} требует ровно 1 аргумент`);
           } else if (sig.arity === 2) {
-            errors.push(`${node.function} function needs exactly 2 arguments`);
+            errors.push(`Функция ${node.function} требует ровно 2 аргумента`);
           } else {
-            errors.push(`${node.function} function needs exactly ${sig.arity} arguments`);
+            errors.push(`Функция ${node.function} требует ровно ${sig.arity} аргументов`);
           }
         }
       }
@@ -728,7 +728,7 @@ export const validateFormula = (
       const hasRightOperand = i < rootNodes.length - 1 && (rootNodes[i+1].type === 'attribute' || rootNodes[i+1].type === 'value' || rootNodes[i+1].type === 'function' || rootNodes[i+1].type === 'group');
       
       if (!hasLeftOperand || !hasRightOperand) {
-        errors.push(`Operator '${currentNode.operator}' needs operands on both sides`);
+        errors.push(`Оператор '${currentNode.operator}' нуждается в операндах с обеих сторон`);
       }
     }
   }
